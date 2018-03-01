@@ -572,28 +572,38 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
     }
     else
     {
-        STRING_HANDLE registration_path = create_registration_path(path_format, NULL);
-        if (registration_path == NULL)
+        char* content;
+        if ((content = bulkOperation_serializeToJson(bulk_op)) == NULL)
         {
-            LogError("Failed to construct a registration path");
+            LogError("Failure serializing enrollment");
+            result = __FAILURE__;
         }
         else
         {
-            HTTP_HEADERS_HANDLE request_headers;
-            if ((request_headers = construct_http_headers(prov_client, NULL, HTTP_CLIENT_REQUEST_POST)) == NULL)
+            STRING_HANDLE registration_path = create_registration_path(path_format, NULL);
+            if (registration_path == NULL)
             {
-                LogError("Failure creating registration json content");
-                result = __FAILURE__;
+                LogError("Failed to construct a registration path");
             }
             else
             {
-                result = rest_call(prov_client, HTTP_CLIENT_REQUEST_POST, STRING_c_str(registration_path), request_headers, NULL);
-                free(prov_client->response);
-                prov_client->response = NULL;
+                HTTP_HEADERS_HANDLE request_headers;
+                if ((request_headers = construct_http_headers(prov_client, bulk_op, HTTP_CLIENT_REQUEST_POST)) == NULL)
+                {
+                    LogError("Failure creating registration json content");
+                    result = __FAILURE__;
+                }
+                else
+                {
+                    result = rest_call(prov_client, HTTP_CLIENT_REQUEST_POST, STRING_c_str(registration_path), request_headers, NULL);
+                    free(prov_client->response);
+                    prov_client->response = NULL;
+                }
+                HTTPHeaders_Free(request_headers);
             }
-            HTTPHeaders_Free(request_headers);
+            STRING_delete(registration_path);
         }
-        STRING_delete(registration_path);
+        free(content);
     }
 
     return result;

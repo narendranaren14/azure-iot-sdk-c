@@ -115,3 +115,40 @@ int json_deserialize_and_get_struct(void** dest, JSON_Object* root_object, const
 
     return result;
 }
+
+JSON_Value* array_toJson(void** arr, const size_t len, TO_JSON_FUNCTION toJson)
+{
+    JSON_Value* root_value = NULL;
+    JSON_Object* root_object = NULL;
+
+    //setup
+    if (arr == NULL)
+    {
+        LogError("array is NULL");
+    }
+    else if ((root_value = json_value_init_object()) == NULL)
+    {
+        LogError("json_value_init_object failed");
+    }
+    else if ((root_object = json_value_get_object(root_value)) == NULL)
+    {
+        LogError("json_value_get_object failed");
+        json_value_free(root_value);
+        root_value = NULL;
+    }
+    else
+    {
+        char*[] new_arr
+        for (int i = 0; i < len; i++)
+        {
+
+            //JSON_Value* result; 
+            //if ((result = toJson(arr[i])) == NULL)
+            //{
+            //    LogError("Failed to deserialize model at index %d", i);
+            //}
+            //else if (json_object_set_value(root_object, ))
+        }
+    }
+
+}

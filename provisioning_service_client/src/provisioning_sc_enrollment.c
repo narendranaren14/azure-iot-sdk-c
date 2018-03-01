@@ -247,6 +247,37 @@ static INDIVIDUAL_ENROLLMENT_HANDLE individualEnrollment_fromJson(JSON_Object* r
     return new_enrollment;
 }
 
+static JSON_Value* individualEnrollment_array_toJson(INDIVIDUAL_ENROLLMENT_HANDLE* arr, size_t len)
+{
+    JSON_Value* root_value = NULL;
+    JSON_Object* root_object = NULL;
+
+    //setup
+    if (arr == NULL)
+    {
+        LogError("array is NULL");
+    }
+    else if ((root_value = json_value_init_object()) == NULL)
+    {
+        LogError("json_value_init_object failed");
+    }
+    else if ((root_object = json_value_get_object(root_value)) == NULL)
+    {
+        LogError("json_value_get_object failed");
+        json_value_free(root_value);
+        root_value = NULL;
+    }
+    else
+    {
+        for (int i = 0; i < len; i++)
+        {
+            individualEnrollment_toJson(arr[i]);
+        }
+    }
+
+
+}
+
 void enrollmentGroup_destroy(ENROLLMENT_GROUP_HANDLE enrollment)
 {
     if (enrollment != NULL)
