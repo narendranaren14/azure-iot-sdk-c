@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#include <stdlib.h>  
+#include <stdlib.h>
 
 #include "azure_c_shared_utility/xlogging.h"
 #include "azure_c_shared_utility/gballoc.h"
@@ -116,39 +116,70 @@ int json_deserialize_and_get_struct(void** dest, JSON_Object* root_object, const
     return result;
 }
 
-JSON_Value* array_toJson(void** arr, const size_t len, TO_JSON_FUNCTION toJson)
+static JSON_Value* struct_array_toJson(void** arr, size_t len, TO_JSON_FUNCTION toJson)
 {
-    JSON_Value* root_value = NULL;
-    JSON_Object* root_object = NULL;
+    JSON_Value* json_array_val = NULL;
+    JSON_Array* json_array = NULL;
 
-    //setup
-    if (arr == NULL)
+    if ((json_array_val = json_value_init_array()) == NULL)
     {
-        LogError("array is NULL");
+        LogError("json_value_init_array failed");
     }
-    else if ((root_value = json_value_init_object()) == NULL)
+    else if ((json_array = json_value_get_array(json_array_val)) == NULL)
     {
-        LogError("json_value_init_object failed");
-    }
-    else if ((root_object = json_value_get_object(root_value)) == NULL)
-    {
-        LogError("json_value_get_object failed");
-        json_value_free(root_value);
-        root_value = NULL;
+        LogError("json_value_get_array failed");
+        json_value_free(json_array_val);
+        json_array_val = NULL;
     }
     else
     {
-        char*[] new_arr
-        for (int i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
-
-            //JSON_Value* result; 
-            //if ((result = toJson(arr[i])) == NULL)
-            //{
-            //    LogError("Failed to deserialize model at index %d", i);
-            //}
-            //else if (json_object_set_value(root_object, ))
+            JSON_Value* model; 
+            if ((model = toJson(arr[i])) == NULL)
+            {
+                LogError("Failed to deserialize model at index %d", i);
+                json_value_free(json_array_val);
+                json_array_val = NULL;
+                break;
+            }
+            else if (json_array_append_value(json_array, model) != JSONSuccess)
+            {
+                LogError("Unable to append model to JSON array");
+                json_value_free(json_array_val);
+                json_array_val = NULL;
+                break;
+            }
         }
     }
 
+    return json_array_val;
+}
+
+int json_serialize_and_set_struct_array(JSON_Object* root_object, const char* json_key, void** arr, size_t len, TO_JSON_FUNCTION element_toJson)
+{
+    int result;
+
+    JSON_Value* struct_val;
+    if (arr== NULL)
+    {
+        LogError("NULL structure");
+        result = __FAILURE__;
+    }
+    else if ((struct_val = struct_array_toJson(arr, len, element_toJson)) == NULL)
+    {
+        LogError("Failed converting structure to JSON Value");
+        result = __FAILURE__;
+    }
+    else if (json_object_set_value(root_object, json_key, struct_val) != JSONSuccess)
+    {
+        LogError("Failed to set JSON Value in JSON Object");
+        result = __FAILURE__;
+    }
+    else
+    {
+        result = 0;
+    }
+
+    return result;
 }

@@ -5,10 +5,13 @@
 
 #include "azure_c_shared_utility/xlogging.h"
 #include "azure_c_shared_utility/gballoc.h"
+#include "azure_c_shared_utility/crt_abstractions.h"
 
 #include "provisioning_sc_bulk_operation.h"
+#include "provisioning_sc_models_serializer.h"
 #include "provisioning_sc_shared_helpers.h"
 #include "provisioning_sc_json_const.h"
+#include "provisioning_sc_enrollment.h"
 #include "parson.h"
 
 #define UNREFERENCED_PARAMETER(x) x
@@ -22,7 +25,7 @@ static void test()
 
 static const char* bulkOperation_mode_toString(PROVISIONING_BULK_OPERATION_MODE mode)
 {
-    char* result;
+    const char* result;
     if (mode == BULK_OP_CREATE)
     {
         result = BULK_ENROLLMENT_MODE_JSON_VALUE_CREATE;
@@ -52,14 +55,10 @@ static JSON_Value* bulkOperation_toJson(const PROVISIONING_BULK_OPERATION* bulk_
     JSON_Value* root_value = NULL;
     JSON_Object* root_object = NULL;
 
-    char* mode_str = NULL;
+    const char* mode_str = NULL;
 
     //setup
-    if (bulk_op == NULL)
-    {
-        LogError("bulk operation is NULL");
-    }
-    else if ((root_value = json_value_init_object()) == NULL)
+    if ((root_value = json_value_init_object()) == NULL)
     {
         LogError("json_value_init_object failed");
     }
@@ -77,5 +76,49 @@ static JSON_Value* bulkOperation_toJson(const PROVISIONING_BULK_OPERATION* bulk_
         json_value_free(root_value);
         root_value = NULL;
     }
-    else if (json_serialize_and_set_struct(root_object, BULK_ENROLLMENT_OPERATION_JSON_KEY_ENROLLMENTS, bulk_op->enrollments, (TO_JSON_FUNCTION)enrollmentList_toJson, REQUIRED) != 0)
+    else if (json_serialize_and_set_struct_array(root_object, BULK_ENROLLMENT_OPERATION_JSON_KEY_ENROLLMENTS, bulk_op->enrollments, bulk_op->num_enrollments, individualEnrollment_toJson) != 0)
+    {
+        LogError("Failed to set '%s' in JSON string", BULK_ENROLLMENT_OPERATION_JSON_KEY_ENROLLMENTS);
+        json_value_free(root_value);
+        root_value = NULL;
+    }
+
+    return root_value;
+}
+
+char* bulkOperation_serializeToJson(const PROVISIONING_BULK_OPERATION* bulk_op)
+{
+    char* result = NULL;
+    char* serialized_string = NULL;
+    JSON_Value* root_value = NULL;
+
+    if (bulk_op == NULL || bulk_op->enrollments == NULL)
+    {
+        LogError("Invalid bulk operation");
+    }
+    else if ((root_value = bulkOperation_toJson(bulk_op)) == NULL)
+    {
+        LogError("Creating json object failed");
+    }
+    else if ((serialized_string = json_serialize_to_string(root_value)) == NULL)
+    {
+        LogError("Failed to serialize to JSON");
+    }
+    else if (mallocAndStrcpy_s(&result, serialized_string) != 0)
+    {
+        LogError("Failed to copy serialized string");
+    }
+
+    if (root_value != NULL)
+    {
+        json_value_free(root_value);
+        root_value = NULL;
+    }
+    if (serialized_string != NULL)
+    {
+        json_free_serialized_string(serialized_string);
+        serialized_string = NULL;
+    }
+
+    return result;
 }

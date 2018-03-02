@@ -415,7 +415,7 @@ static int prov_sc_create_or_update_record(PROVISIONING_SERVICE_CLIENT_HANDLE pr
                 HTTP_HEADERS_HANDLE request_headers;
                 if ((request_headers = construct_http_headers(prov_client, vector.getEtag(handle), HTTP_CLIENT_REQUEST_PUT)) == NULL)
                 {
-                    LogError("Failure creating registration json content");
+                    LogError("Failure constructing headers");
                     result = __FAILURE__;
                 }
                 else
@@ -479,7 +479,7 @@ static int prov_sc_delete_record_by_param(PROVISIONING_SERVICE_CLIENT_HANDLE pro
             HTTP_HEADERS_HANDLE request_headers;
             if ((request_headers = construct_http_headers(prov_client, etag, HTTP_CLIENT_REQUEST_DELETE)) == NULL)
             {
-                LogError("Failure creating registration json content");
+                LogError("Failure constructing http headers");
                 result = __FAILURE__;
             }
             else
@@ -527,7 +527,7 @@ static int prov_sc_get_record(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, co
             HTTP_HEADERS_HANDLE request_headers;
             if ((request_headers = construct_http_headers(prov_client, NULL, HTTP_CLIENT_REQUEST_GET)) == NULL)
             {
-                LogError("Failure creating registration json content");
+                LogError("Failure constructing http headers");
                 result = __FAILURE__;
             }
             else
@@ -575,7 +575,7 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
         char* content;
         if ((content = bulkOperation_serializeToJson(bulk_op)) == NULL)
         {
-            LogError("Failure serializing enrollment");
+            LogError("Failure serializing bulk operation");
             result = __FAILURE__;
         }
         else
@@ -588,14 +588,14 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
             else
             {
                 HTTP_HEADERS_HANDLE request_headers;
-                if ((request_headers = construct_http_headers(prov_client, bulk_op, HTTP_CLIENT_REQUEST_POST)) == NULL)
+                if ((request_headers = construct_http_headers(prov_client, NULL, HTTP_CLIENT_REQUEST_POST)) == NULL)
                 {
-                    LogError("Failure creating registration json content");
+                    LogError("Failure constructing http headers");
                     result = __FAILURE__;
                 }
                 else
                 {
-                    result = rest_call(prov_client, HTTP_CLIENT_REQUEST_POST, STRING_c_str(registration_path), request_headers, NULL);
+                    result = rest_call(prov_client, HTTP_CLIENT_REQUEST_POST, STRING_c_str(registration_path), request_headers, content);
                     free(prov_client->response);
                     prov_client->response = NULL;
                 }

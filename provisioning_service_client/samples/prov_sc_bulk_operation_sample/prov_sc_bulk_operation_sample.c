@@ -33,7 +33,7 @@ int main()
     PROVISIONING_BULK_OPERATION bulkop = { 0 };
     bulkop.mode = BULK_OP_CREATE;
     bulkop.enrollments = ie_list;
-    bulkop.enrollments_num = 2;
+    bulkop.num_enrollments = 2;
 
     prov_sc_run_individual_enrollment_bulk_operation(prov_sc, &bulkop);
 

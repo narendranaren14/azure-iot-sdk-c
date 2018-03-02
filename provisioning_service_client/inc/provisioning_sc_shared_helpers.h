@@ -8,6 +8,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include <stdlib.h>
 #include "parson.h"
 
 #define NECESSITY_VALUES    \
@@ -23,6 +24,7 @@ MOCKABLE_FUNCTION(, int, mallocAndStrcpy_overwrite, char**, dest, const char*, s
 MOCKABLE_FUNCTION(, int, copy_json_string_field, char**, dest, JSON_Object*, root_object, const char*, json_key);
 MOCKABLE_FUNCTION(, int, json_serialize_and_set_struct, JSON_Object*, root_object, const char*, json_key, void*, structure, TO_JSON_FUNCTION, toJson, NECESSITY, necessity);
 MOCKABLE_FUNCTION(, int, json_deserialize_and_get_struct, void**, dest, JSON_Object*, root_object, const char*, json_key, FROM_JSON_FUNCTION, fromJson, NECESSITY, necessity);
+MOCKABLE_FUNCTION(, int, json_serialize_and_set_struct_array, JSON_Object*, root_object, const char*, json_key, void**, arr, size_t, len, TO_JSON_FUNCTION, element_toJson);
 
 #ifdef __cplusplus
 }

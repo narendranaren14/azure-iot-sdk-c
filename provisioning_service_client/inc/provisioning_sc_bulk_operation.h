@@ -25,7 +25,7 @@ typedef struct PROVISIONING_BULK_OPERATION_TAG
 {
     PROVISIONING_BULK_OPERATION_MODE mode;
     void* enrollments;
-    size_t enrollments_num;
+    size_t num_enrollments;
 } PROVISIONING_BULK_OPERATION;
 
 #ifdef __cplusplus

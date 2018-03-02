@@ -10,10 +10,12 @@ extern "C" {
 
 #include "azure_c_shared_utility/umock_c_prod.h"
 #include "azure_c_shared_utility/macro_utils.h"
+#include "provisioning_sc_enrollment.h"
+#include "provisioning_sc_bulk_operation.h"
 
 /** @brief  Serializes an Individual Enrollment into a JSON String.
 *
-* @param    handle      A handle for the Individual Enrollment to be serialized.
+* @param    enrollment      A handle for the Individual Enrollment to be serialized.
 *
 * @return   A non-NULL string containing the serialized JSON String, and NULL on failure.
 */
@@ -29,7 +31,7 @@ MOCKABLE_FUNCTION(, INDIVIDUAL_ENROLLMENT_HANDLE, individualEnrollment_deseriali
 
 /** @brief  Serializes an Enrollment Group into a JSON String.
 *
-* @param    handle      A handle for the Enrollment Group to be serialized.
+* @param    enrollment      A handle for the Enrollment Group to be serialized.
 *
 * @return   A non-NULL string containing the serialized JSON String, and NULL on failure.
 */
@@ -42,6 +44,14 @@ MOCKABLE_FUNCTION(, char*, enrollmentGroup_serializeToJson, const ENROLLMENT_GRO
 * @return   A non-NULL handle representing an Enrollment Group, and NULL on failure.
 */
 MOCKABLE_FUNCTION(, ENROLLMENT_GROUP_HANDLE, enrollmentGroup_deserializeFromJson, const char*, json_string);
+
+/** @brief  Serializes an Enrollment Group into a JSON String.
+*
+* @param    bulk_op      A pointer to a Bulk Operation structure
+*
+* @return   A non-NULL string containing the serialized JSON String, and NULL on failure.
+*/
+MOCKABLE_FUNCTION(, char*, bulkOperation_serializeToJson, const PROVISIONING_BULK_OPERATION*, bulk_op);
 
 #ifdef __cplusplus
 }
