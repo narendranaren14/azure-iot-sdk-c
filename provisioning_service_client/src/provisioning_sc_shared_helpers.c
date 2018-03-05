@@ -116,7 +116,7 @@ int json_deserialize_and_get_struct(void** dest, JSON_Object* root_object, const
     return result;
 }
 
-static JSON_Value* struct_array_toJson(void** arr, size_t len, TO_JSON_FUNCTION toJson)
+static JSON_Value* struct_array_toJson(void* arr[], size_t len, TO_JSON_FUNCTION toJson)
 {
     JSON_Value* json_array_val = NULL;
     JSON_Array* json_array = NULL;
@@ -156,22 +156,62 @@ static JSON_Value* struct_array_toJson(void** arr, size_t len, TO_JSON_FUNCTION 
     return json_array_val;
 }
 
-int json_serialize_and_set_struct_array(JSON_Object* root_object, const char* json_key, void** arr, size_t len, TO_JSON_FUNCTION element_toJson)
+static void free_struct_arr(void* arr[], size_t len)
+{
+    if (len > 0)
+    {
+        for (size_t i = 0; i < len; i++)
+        {
+            free(arr[i]);
+        }
+        free(arr);
+    }
+}
+
+static void** struct_array_fromJson(JSON_Array* json_arr, size_t len, FROM_JSON_FUNCTION fromJson)
+{
+    void** struct_arr = malloc(len * sizeof(void*));
+    if (struct_arr == NULL)
+    {
+        LogError("Failed to allocate memory for struct array");
+    }
+    else
+    {
+        JSON_Object* element_obj;
+        for (size_t i = 0; i < len; i++)
+        {
+            if ((element_obj = json_array_get_object(json_arr, i)) == NULL)
+            {
+                LogError("Failed to retrieve object at index %d from JSON Array", i);
+                free_struct_arr(struct_arr, i-1);
+            }
+            else if ((struct_arr[i] = fromJson(element_obj)) == NULL)
+            {
+                LogError("Failed to deserialize object at index %d from JSON Array", i);
+                free_struct_arr(struct_arr, i - 1);
+            }
+        }
+    }
+
+    return struct_arr;
+}
+
+int json_serialize_and_set_struct_array(JSON_Object* root_object, const char* json_key, void* arr[], size_t len, TO_JSON_FUNCTION element_toJson)
 {
     int result;
 
-    JSON_Value* struct_val;
+    JSON_Value* arr_val;
     if (arr== NULL)
     {
         LogError("NULL structure");
         result = __FAILURE__;
     }
-    else if ((struct_val = struct_array_toJson(arr, len, element_toJson)) == NULL)
+    else if ((arr_val = struct_array_toJson(arr, len, element_toJson)) == NULL)
     {
         LogError("Failed converting structure to JSON Value");
         result = __FAILURE__;
     }
-    else if (json_object_set_value(root_object, json_key, struct_val) != JSONSuccess)
+    else if (json_object_set_value(root_object, json_key, arr_val) != JSONSuccess)
     {
         LogError("Failed to set JSON Value in JSON Object");
         result = __FAILURE__;
@@ -179,6 +219,39 @@ int json_serialize_and_set_struct_array(JSON_Object* root_object, const char* js
     else
     {
         result = 0;
+    }
+
+    return result;
+}
+
+int json_deserialize_and_get_struct_array(void* dest_arr[], size_t* dest_len, JSON_Object* root_object, const char* json_key, FROM_JSON_FUNCTION element_fromJson)
+{
+    int result = 0;
+
+    JSON_Array* json_arr = json_object_get_array(root_object, json_key);
+
+    if (dest_arr == NULL)
+    {
+        LogError("Destination array is NULL");
+    }
+    else
+    {
+        size_t len;
+        if ((len = json_array_get_count(json_arr)) <= 0)
+        {
+            LogError("No items in JSON array");
+            result = __FAILURE__;
+        }
+        if ((dest_arr = struct_array_fromJson(json_arr, len, element_fromJson)) == NULL)
+        {
+            LogError("Failed to deserialize from JSON");
+            result = __FAILURE__;
+        }
+        else
+        {
+            result = 0;
+            *dest_len = len;
+        }
     }
 
     return result;

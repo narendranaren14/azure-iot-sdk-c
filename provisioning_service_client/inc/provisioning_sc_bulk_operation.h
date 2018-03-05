@@ -8,6 +8,13 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include <stdlib.h>
+#include <stdint.h>
+
+#include "azure_c_shared_utility/umock_c_prod.h"
+#include "azure_c_shared_utility/macro_utils.h"
+#include "parson.h"
+
 #define PROVISIONING_BULK_OPERATION_MODE_VALUES \
 BULK_OP_CREATE, \
 BULK_OP_UPDATE, \
@@ -16,16 +23,26 @@ BULK_OP_DELETE
 
 DEFINE_ENUM(PROVISIONING_BULK_OPERATION_MODE, PROVISIONING_BULK_OPERATION_MODE_VALUES);
 
+typedef struct PROVISIONING_BULK_OPERATION_ERROR_TAG
+{
+    char* registration_id;
+    int32_t error_code;
+    char* error_status;
+} PROVISIONING_BULK_OPERATION_ERROR;
+
 typedef struct PROVISIONING_BULK_OPERATION_RESULT_TAG
 {
-    int dummy;
+    bool is_successful;
+    PROVISIONING_BULK_OPERATION_ERROR** errors; //array
+    size_t num_errors;
 } PROVISIONING_BULK_OPERATION_RESULT;
 
 typedef struct PROVISIONING_BULK_OPERATION_TAG
 {
     PROVISIONING_BULK_OPERATION_MODE mode;
-    void* enrollments;
+    void* enrollments; //is this right?
     size_t num_enrollments;
+    PROVISIONING_BULK_OPERATION_RESULT* result;
 } PROVISIONING_BULK_OPERATION;
 
 #ifdef __cplusplus

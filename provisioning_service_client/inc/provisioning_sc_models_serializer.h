@@ -45,13 +45,21 @@ MOCKABLE_FUNCTION(, char*, enrollmentGroup_serializeToJson, const ENROLLMENT_GRO
 */
 MOCKABLE_FUNCTION(, ENROLLMENT_GROUP_HANDLE, enrollmentGroup_deserializeFromJson, const char*, json_string);
 
-/** @brief  Serializes an Enrollment Group into a JSON String.
+/** @brief  Serializes an Bulk Operation into a JSON String.
 *
 * @param    bulk_op      A pointer to a Bulk Operation structure
 *
 * @return   A non-NULL string containing the serialized JSON String, and NULL on failure.
 */
 MOCKABLE_FUNCTION(, char*, bulkOperation_serializeToJson, const PROVISIONING_BULK_OPERATION*, bulk_op);
+
+/** @brief  Deserializes a JSON String representation of a Bulk Operation Result.
+*
+* @param    json_string     A JSON String representing an Enrollment Group.
+*
+* @return   A non-NULL pointer to a Bulk Operation Result and NULL on failure.
+*/
+MOCKABLE_FUNCTION(, PROVISIONING_BULK_OPERATION_RESULT*, bulkOperationResult_deserializeFromJson, const char*, json_string);
 
 #ifdef __cplusplus
 }

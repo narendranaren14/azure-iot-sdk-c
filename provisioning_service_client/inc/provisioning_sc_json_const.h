@@ -86,10 +86,17 @@ static const char* INITIAL_TWIN_PROPERTIES_JSON_KEY_DESIRED = "desired";
 static const char* BULK_ENROLLMENT_OPERATION_JSON_KEY_MODE = "mode";
 static const char* BULK_ENROLLMENT_OPERATION_JSON_KEY_ENROLLMENTS = "enrollments";
 
-static const char* BULK_ENROLLMENT_MODE_JSON_VALUE_CREATE = "create";
-static const char* BULK_ENROLLMENT_MODE_JSON_VALUE_UPDATE = "update";
-static const char* BULK_ENROLLMENT_MODE_JSON_VALUE_UPDATE_IF_MATCH_ETAG = "updateIfMatchETag";
-static const char* BULK_ENROLLMENT_MODE_JSON_VALUE_DELETE = "delete";
+static const char* BULK_ENROLLMENT_OPERATION_MODE_JSON_VALUE_CREATE = "create";
+static const char* BULK_ENROLLMENT_OPERATION_MODE_JSON_VALUE_UPDATE = "update";
+static const char* BULK_ENROLLMENT_OPERATION_MODE_JSON_VALUE_UPDATE_IF_MATCH_ETAG = "updateIfMatchETag";
+static const char* BULK_ENROLLMENT_OPERATION_MODE_JSON_VALUE_DELETE = "delete";
+
+static const char* BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_REG_ID = "registrationId";
+static const char* BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_ERROR_CODE = "errorCode";
+static const char* BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_ERROR_STATUS = "errorStatus";
+
+static const char* BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_IS_SUCCESSFUL = "isSuccessful";
+static const char* BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_ERRORS = "errors";
 
 #ifdef __cplusplus
 }

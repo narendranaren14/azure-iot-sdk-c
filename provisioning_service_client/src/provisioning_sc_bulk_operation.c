@@ -28,19 +28,19 @@ static const char* bulkOperation_mode_toString(PROVISIONING_BULK_OPERATION_MODE 
     const char* result;
     if (mode == BULK_OP_CREATE)
     {
-        result = BULK_ENROLLMENT_MODE_JSON_VALUE_CREATE;
+        result = BULK_ENROLLMENT_OPERATION_MODE_JSON_VALUE_CREATE;
     }
     else if (mode == BULK_OP_UPDATE)
     {
-        result = BULK_ENROLLMENT_MODE_JSON_VALUE_UPDATE;
+        result = BULK_ENROLLMENT_OPERATION_MODE_JSON_VALUE_UPDATE;
     }
     else if (mode == BULK_OP_UPDATE_IF_MATCH_ETAG)
     {
-        result = BULK_ENROLLMENT_MODE_JSON_VALUE_UPDATE_IF_MATCH_ETAG;
+        result = BULK_ENROLLMENT_OPERATION_MODE_JSON_VALUE_UPDATE_IF_MATCH_ETAG;
     }
     else if (mode == BULK_OP_DELETE)
     {
-        result = BULK_ENROLLMENT_MODE_JSON_VALUE_DELETE;
+        result = BULK_ENROLLMENT_OPERATION_MODE_JSON_VALUE_DELETE;
     }
     else
     {
@@ -86,6 +86,102 @@ static JSON_Value* bulkOperation_toJson(const PROVISIONING_BULK_OPERATION* bulk_
     return root_value;
 }
 
+static void bulkOperationError_destroy(PROVISIONING_BULK_OPERATION_ERROR* error)
+{
+    if (error != NULL)
+    {
+        free(error->registration_id);
+        free(error->error_status);
+        free(error);
+    }
+}
+
+static PROVISIONING_BULK_OPERATION_ERROR* bulkOperationError_fromJson(JSON_Object* root_object)
+{
+    PROVISIONING_BULK_OPERATION_ERROR* new_error = NULL;
+
+    if (root_object == NULL)
+    {
+        LogError("No error in JSON");
+    }
+    else if ((new_error = malloc(sizeof(PROVISIONING_BULK_OPERATION_ERROR))) == NULL)
+    {
+        LogError("Allocation of Bulk Operation Error failed");
+    }
+    else
+    {
+        memset(new_error, 0, sizeof(PROVISIONING_BULK_OPERATION_ERROR));
+
+        if (copy_json_string_field(&(new_error->registration_id), root_object, BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_REG_ID) != 0)
+        {
+            LogError("Failed to set '%s' in Bulk Operation Error", BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_REG_ID);
+            bulkOperationError_destroy(new_error);
+            new_error = NULL;
+        }
+        else if (copy_json_string_field(&(new_error->error_status), root_object, BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_ERROR_STATUS) != 0)
+        {
+            LogError("Failed to set '%s' in Bulk Operation Error", BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_ERROR_STATUS);
+            bulkOperationError_destroy(new_error);
+            new_error = NULL;
+        }
+        else
+        {
+            new_error->error_code = (int32_t)json_object_get_number(root_object, BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_ERROR_CODE);
+        }
+    }
+
+    return new_error;
+}
+
+static void bulkOperationResult_destroy(PROVISIONING_BULK_OPERATION_RESULT* bulk_op_result)
+{
+    if (bulk_op_result != NULL && bulk_op_result->num_errors > 0)
+    {
+        for (size_t i = 0; i < bulk_op_result->num_errors; i++)
+        {
+            bulkOperationError_destroy(bulk_op_result->errors[i]);
+        }
+    }
+}
+
+static PROVISIONING_BULK_OPERATION_RESULT* bulkOperationResult_fromJson(JSON_Object* root_object)
+{
+    PROVISIONING_BULK_OPERATION_RESULT* new_result = NULL;
+
+    if (root_object == NULL)
+    {
+        LogError("No error in JSON");
+    }
+    else if ((new_result = malloc(sizeof(PROVISIONING_BULK_OPERATION_RESULT))) == NULL)
+    {
+        LogError("Allocation of Bulk Operation Error failed");
+    }
+    else
+    {
+        memset(new_result, 0, sizeof(PROVISIONING_BULK_OPERATION_RESULT));
+        int bool_res;
+
+        if ((bool_res = json_object_get_boolean(root_object, BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_IS_SUCCESSFUL)) == -1)
+        {
+            LogError("Failed to set '%s' in Bulk Operation Result", BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_REG_ID);
+            bulkOperationResult_destroy(new_result);
+            new_result = NULL;
+        }
+        else if (json_deserialize_and_get_struct_array(new_result->errors, &(new_result->num_errors), root_object, BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_ERRORS, bulkOperationError_fromJson) != 0)
+        {
+            LogError("Failed to deserialize Bulk Operation Errors");
+            bulkOperationResult_destroy(new_result);
+            new_result = NULL;
+        }
+        else
+        {
+            new_result->is_successful = (bool)bool_res;
+        }
+    }
+
+    return new_result;
+}
+
 char* bulkOperation_serializeToJson(const PROVISIONING_BULK_OPERATION* bulk_op)
 {
     char* result = NULL;
@@ -122,3 +218,38 @@ char* bulkOperation_serializeToJson(const PROVISIONING_BULK_OPERATION* bulk_op)
 
     return result;
 }
+
+PROVISIONING_BULK_OPERATION_RESULT* bulkOperationResult_deserializeFromJson(const char* json_string)
+{
+    PROVISIONING_BULK_OPERATION_RESULT* new_result = NULL;
+    JSON_Value* root_value = NULL;
+    JSON_Object* root_object = NULL;
+
+    if (json_string == NULL)
+    {
+        LogError("Cannot deserialize NULL");
+    }
+    else if ((root_value = json_parse_string(json_string)) == NULL)
+    {
+        LogError("Parsing JSON string failed");
+    }
+    else if ((root_object = json_value_get_object(root_value)) == NULL)
+    {
+        LogError("Creating JSON object failed");
+    }
+    else
+    {
+        if ((new_result = bulkOperationResult_fromJson(root_object)) == NULL)
+        {
+            LogError("Creating new Bulk Operation Result failed");
+        }
+        json_value_free(root_value); //implicitly frees root_object
+        root_value = NULL;
+    }
+
+    return new_result;
+}
+
+
+
+//PROVISIONING_BULK_OPERATION_RESULT

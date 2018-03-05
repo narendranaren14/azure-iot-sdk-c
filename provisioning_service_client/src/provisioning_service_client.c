@@ -596,6 +596,20 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
                 else
                 {
                     result = rest_call(prov_client, HTTP_CLIENT_REQUEST_POST, STRING_c_str(registration_path), request_headers, content);
+                    
+                    if (result == 0)
+                    {
+                        if ((bulk_op->result = bulkOperationResult_deserializeFromJson(prov_client->response)) == NULL)
+                        {
+                            LogError("Failure deserializing bulk operation result");
+                            result = __FAILURE__;
+                        }
+                    }
+                    else
+                    {
+                        LogError("Rest call failed");
+                    }
+                    
                     free(prov_client->response);
                     prov_client->response = NULL;
                 }
