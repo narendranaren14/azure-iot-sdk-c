@@ -73,14 +73,19 @@ typedef struct HANDLE_FUNCTION_VECTOR_TAG
 #define PROVISIONING_SERVICE_API_VERSION    "2017-11-15"
 #define ENROLL_GROUP_PROVISION_PATH_FMT     "/enrollmentGroups/%s"
 #define INDV_ENROLL_PROVISION_PATH_FMT      "/enrollments/%s"
+#define REG_STATE_PROVISION_PATH_FMT        "/registrations/%s"
 #define INDV_ENROLL_BULK_PATH_FMT           "/enrollments/"
 #define INDV_ENROLL_QUERY_PATH_FMT          "/enrollments/query"
+#define ENROLL_GROUP_QUERY_PATH_FMT         "/enrollmentGroups/query"
 #define API_VERSION_QUERY_PARAM             "?api-version=%s"
 #define HEADER_KEY_AUTHORIZATION            "Authorization"
 #define HEADER_KEY_IF_MATCH                 "If-Match"
 #define HEADER_KEY_USER_AGENT               "UserAgent"
 #define HEADER_KEY_ACCEPT                   "Accept"
 #define HEADER_KEY_CONTENT_TYPE             "Content-Type"
+#define HEADER_KEY_CONTINUATION             "x-ms-continuation"
+#define HEADER_KEY_MAX_ITEM_COUNT           "x-ms-max-item-count"
+#define HEADER_KEY_ITEM_TYPE                "x-ms-item-type"
 #define HEADER_VALUE_USER_AGENT             "iothub_dps_prov_client/1.0"
 #define HEADER_VALUE_ACCEPT                 "application/json"
 #define HEADER_VALUE_CONTENT_TYPE           "application/json; charset=utf-8"
@@ -114,6 +119,18 @@ static HANDLE_FUNCTION_VECTOR getVector_enrollmentGroup()
     return vector;
 }
 
+static HANDLE_FUNCTION_VECTOR getVector_registrationState()
+{
+    HANDLE_FUNCTION_VECTOR vector;
+    vector.serializeToJson = NULL;
+    vector.deserializeFromJson = (VECTOR_DESERIALIZE_FROM_JSON)deviceRegistrationState_deserializeFromJson;
+    vector.getId = (VECTOR_GET_ID)deviceRegistrationState_getRegistrationId;
+    vector.getEtag = (VECTOR_GET_ETAG)deviceRegistrationState_getEtag;
+    vector.destroy = (VECTOR_DESTROY)deviceRegistrationState_destroy;
+
+    return vector;
+}
+
 static void on_http_connected(void* callback_ctx, HTTP_CALLBACK_REASON connect_result)
 {
     if (callback_ctx != NULL)
@@ -132,17 +149,17 @@ static void on_http_connected(void* callback_ctx, HTTP_CALLBACK_REASON connect_r
 
 static void on_http_error(void* callback_ctx, HTTP_CALLBACK_REASON error_result)
 {
-    (void)error_result;
-    if (callback_ctx != NULL)
-    {
-        PROV_SERVICE_CLIENT* prov_client = (PROV_SERVICE_CLIENT*)callback_ctx;
-        prov_client->http_state = HTTP_STATE_ERROR;
-        LogError("Failure encountered in http %d", error_result);
-    }
-    else
-    {
-        LogError("Failure encountered in http %d", error_result);
-    }
+(void)error_result;
+if (callback_ctx != NULL)
+{
+    PROV_SERVICE_CLIENT* prov_client = (PROV_SERVICE_CLIENT*)callback_ctx;
+    prov_client->http_state = HTTP_STATE_ERROR;
+    LogError("Failure encountered in http %d", error_result);
+}
+else
+{
+    LogError("Failure encountered in http %d", error_result);
+}
 }
 
 static void on_http_reply_recv(void* callback_ctx, HTTP_CALLBACK_REASON request_result, const unsigned char* content, size_t content_len, unsigned int status_code, HTTP_HEADERS_HANDLE responseHeadersHandle)
@@ -167,7 +184,7 @@ static void on_http_reply_recv(void* callback_ctx, HTTP_CALLBACK_REASON request_
                 strcpy(prov_client->response, content_str);
             }
         }
-        
+
         //update HTTP state
         if (request_result == HTTP_CALLBACK_REASON_OK)
         {
@@ -226,6 +243,18 @@ static HTTP_HEADERS_HANDLE construct_http_headers(const PROV_SERVICE_CLIENT* pro
     }
     return result;
 }
+
+//static int add_query_headers(HTTP_HEADERS_HANDLE headers, PROVISIONING_QUERY* query)
+//{
+//    int result = 0;
+//    if ((HTTPHeaders_AddHeaderNameValuePair(headers, HEADER_KEY_CONTINUATION, query->continuation_token) != HTTP_HEADERS_OK) ||
+//        (HTTPHeaders_AddHeaderNameValuePair(headers, HEADER_KEY_MAX_ITEM_COUNT, query->page_size) != HTTP_HEADERS_OK))
+//    {
+//        LogError("Failure adding query headers");
+//        result = __FAILURE__;
+//    }
+//    return result;
+//}
 
 static STRING_HANDLE create_registration_path(const char* path_format, const char* id)
 {
@@ -567,7 +596,7 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
     }
     else if (bulk_op == NULL)
     {
-        LogError("Invalid Id");
+        LogError("Invalid Bulk Op");
         result = __FAILURE__;
     }
     else
@@ -622,6 +651,78 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
 
     return result;
 }
+
+//static int prov_sc_query(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_QUERY* query, const char* path_format, void** response, size_t* response_len)
+//{
+//    int result = 0;
+//
+//    if (prov_client == NULL)
+//    {
+//        LogError("Invalid Provisioning Client Handle");
+//        result = __FAILURE__;
+//    }
+//    else if (query == NULL || query->query_spec == NULL)
+//    {
+//        LogError("Invalid Query");
+//        result = __FAILURE__;
+//    }
+//    else
+//    {
+//        char* content;
+//        if ((content = querySpecification_serializeToJson(query->query_spec)) == NULL)
+//        {
+//            LogError("Failure serializing bulk operation");
+//            result = __FAILURE__;
+//        }
+//        else
+//        {
+//            STRING_HANDLE registration_path = create_registration_path(path_format, NULL);
+//            if (registration_path == NULL)
+//            {
+//                LogError("Failed to construct a registration path");
+//            }
+//            else
+//            {
+//                HTTP_HEADERS_HANDLE request_headers;
+//                if ((request_headers = construct_http_headers(prov_client, NULL, HTTP_CLIENT_REQUEST_POST)) == NULL)
+//                {
+//                    LogError("Failure constructing http headers");
+//                    result = __FAILURE__;
+//                }
+//                else if (add_query_headers(request_headers, query) != 0)
+//                {
+//                    LogError("Failed constructing http headers");
+//                    result = __FAILURE__;
+//                }
+//                else
+//                {
+//                    result = rest_call(prov_client, HTTP_CLIENT_REQUEST_POST, STRING_c_str(registration_path), request_headers, content);
+//
+//                    if (result == 0)
+//                    {
+//                        if ()
+//                        {
+//                            LogError("Failure deserializing bulk operation result");
+//                            result = __FAILURE__;
+//                        }
+//                    }
+//                    else
+//                    {
+//                        LogError("Rest call failed");
+//                    }
+//
+//                    free(prov_client->response);
+//                    prov_client->response = NULL;
+//                }
+//                HTTPHeaders_Free(request_headers);
+//            }
+//            STRING_delete(registration_path);
+//        }
+//        free(content);
+//    }
+//
+//    return result;
+//}
 
 //Exposed functions below
 
@@ -820,21 +921,19 @@ int prov_sc_run_individual_enrollment_bulk_operation(PROVISIONING_SERVICE_CLIENT
     return prov_sc_run_bulk_operation(prov_client, bulk_op, INDV_ENROLL_BULK_PATH_FMT);
 }
 
-int prov_sc_delete_device_registration_state(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, const char* id)
+//int prov_sc_individual_enrollment_query_get_results(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_QUERY* query)
+//{
+//    //return prov_sc_query(prov_client, query, INDV_ENROLL_QUERY_PATH_FMT);
+//}
+
+int prov_sc_delete_device_registration_state(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, const char* reg_id, const char* etag)
 {
-    LogError("Unimplemented until Query implementation");
-    UNREFERENCED_PARAMETER(prov_client);
-    UNREFERENCED_PARAMETER(id);
-    return 0;
+    return prov_sc_delete_record_by_param(prov_client, reg_id, etag, REG_STATE_PROVISION_PATH_FMT);
 }
 
-int prov_sc_get_device_registration_state(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, const char* id, DEVICE_REGISTRATION_STATE_HANDLE* reg_state_ptr)
+int prov_sc_get_device_registration_state(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, const char* reg_id, DEVICE_REGISTRATION_STATE_HANDLE* reg_state_ptr)
 {
-    LogError("Unimplemented until Query implementation");
-    UNREFERENCED_PARAMETER(prov_client);
-    UNREFERENCED_PARAMETER(id);
-    UNREFERENCED_PARAMETER(reg_state_ptr);
-    return 0;
+    return prov_sc_get_record(prov_client, reg_id, reg_state_ptr, getVector_registrationState(), REG_STATE_PROVISION_PATH_FMT);
 }
 
 int prov_sc_create_or_update_enrollment_group(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, ENROLLMENT_GROUP_HANDLE* enrollment_ptr)

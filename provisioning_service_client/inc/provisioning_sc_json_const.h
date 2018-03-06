@@ -98,6 +98,8 @@ static const char* BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_ERROR_STATUS = "erro
 static const char* BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_IS_SUCCESSFUL = "isSuccessful";
 static const char* BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_ERRORS = "errors";
 
+static const char* QUERY_SPECIFICATION_JSON_KEY_QUERY = "query";
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

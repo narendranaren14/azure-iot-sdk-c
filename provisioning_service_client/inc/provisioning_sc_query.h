@@ -7,16 +7,27 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-
-    //typedef struct PROVISIONING_QUERY_SPECIFICATION* PROVISIONING_QUERY_SPECIFICATION_HANDLE;
     
     typedef struct PROVISIONING_QUERY_SPECIFICATION_TAG
     {
-        int dummy;
+        char* query_string;
     } PROVISIONING_QUERY_SPECIFICATION;
-    
-    typedef struct PROVISIONING_QUERY* PROVISIONING_QUERY_HANDLE;
-    typedef struct PROVISIONING_QUERY_RESULT* PROVISIONING_QUERY_RESULT_HANDLE;
+
+    typedef struct PROVISIONING_QUERY_TAG
+    {
+        size_t page_size;
+        char* continuation_token;
+        PROVISIONING_QUERY_SPECIFICATION* query_spec;
+
+    } PROVISIONING_QUERY;
+
+    typedef struct PROVISIONING_QUERY_RESPONSE_TAG
+    {
+        void** response_arr;
+        size_t repsonse_arr_size;
+    } PROVISIONING_QUERY_RESPONSE;
+
+    MOCKABLE_FUNCTION(, const char*, querySpecification_serializeToJson, PROVISIONING_QUERY_SPECIFICATION*, query_spec);
 
 #ifdef __cplusplus
 }

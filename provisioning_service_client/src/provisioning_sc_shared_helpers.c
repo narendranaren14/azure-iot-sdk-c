@@ -224,7 +224,7 @@ int json_serialize_and_set_struct_array(JSON_Object* root_object, const char* js
     return result;
 }
 
-int json_deserialize_and_get_struct_array(void* dest_arr[], size_t* dest_len, JSON_Object* root_object, const char* json_key, FROM_JSON_FUNCTION element_fromJson)
+int json_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_len, JSON_Object* root_object, const char* json_key, FROM_JSON_FUNCTION element_fromJson)
 {
     int result = 0;
 
@@ -233,6 +233,7 @@ int json_deserialize_and_get_struct_array(void* dest_arr[], size_t* dest_len, JS
     if (dest_arr == NULL)
     {
         LogError("Destination array is NULL");
+        result = __FAILURE__;
     }
     else
     {
@@ -242,7 +243,7 @@ int json_deserialize_and_get_struct_array(void* dest_arr[], size_t* dest_len, JS
             LogError("No items in JSON array");
             result = __FAILURE__;
         }
-        if ((dest_arr = struct_array_fromJson(json_arr, len, element_fromJson)) == NULL)
+        if ((*dest_arr = struct_array_fromJson(json_arr, len, element_fromJson)) == NULL)
         {
             LogError("Failed to deserialize from JSON");
             result = __FAILURE__;

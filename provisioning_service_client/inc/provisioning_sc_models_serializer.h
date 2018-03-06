@@ -45,6 +45,14 @@ MOCKABLE_FUNCTION(, char*, enrollmentGroup_serializeToJson, const ENROLLMENT_GRO
 */
 MOCKABLE_FUNCTION(, ENROLLMENT_GROUP_HANDLE, enrollmentGroup_deserializeFromJson, const char*, json_string);
 
+/** @brief  Deserializes a JSON String representation of a Device Registration State.
+*
+* @param    json_string     A JSON String representing a Device Registration State.
+*
+* @return   A non-NULL handle representing a Device Registration State, and NULL on failure.
+*/
+MOCKABLE_FUNCTION(, DEVICE_REGISTRATION_STATE_HANDLE, deviceRegistrationState_deserializeFromJson, const char*, json_string);
+
 /** @brief  Serializes an Bulk Operation into a JSON String.
 *
 * @param    bulk_op      A pointer to a Bulk Operation structure

@@ -167,7 +167,7 @@ static PROVISIONING_BULK_OPERATION_RESULT* bulkOperationResult_fromJson(JSON_Obj
             bulkOperationResult_destroy(new_result);
             new_result = NULL;
         }
-        else if (json_deserialize_and_get_struct_array(new_result->errors, &(new_result->num_errors), root_object, BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_ERRORS, bulkOperationError_fromJson) != 0)
+        else if (json_deserialize_and_get_struct_array(&(new_result->errors), &(new_result->num_errors), root_object, BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_ERRORS, bulkOperationError_fromJson) != 0)
         {
             LogError("Failed to deserialize Bulk Operation Errors");
             bulkOperationResult_destroy(new_result);
