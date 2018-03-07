@@ -243,7 +243,7 @@ int json_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_len, JS
             LogError("No items in JSON array");
             result = __FAILURE__;
         }
-        if ((*dest_arr = struct_array_fromJson(json_arr, len, element_fromJson)) == NULL)
+        else if ((*dest_arr = struct_array_fromJson(json_arr, len, element_fromJson)) == NULL)
         {
             LogError("Failed to deserialize from JSON");
             result = __FAILURE__;

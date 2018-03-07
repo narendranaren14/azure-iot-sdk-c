@@ -76,11 +76,17 @@ static JSON_Value* bulkOperation_toJson(const PROVISIONING_BULK_OPERATION* bulk_
         json_value_free(root_value);
         root_value = NULL;
     }
-    else if (json_serialize_and_set_struct_array(root_object, BULK_ENROLLMENT_OPERATION_JSON_KEY_ENROLLMENTS, bulk_op->enrollments, bulk_op->num_enrollments, individualEnrollment_toJson) != 0)
+    else
     {
-        LogError("Failed to set '%s' in JSON string", BULK_ENROLLMENT_OPERATION_JSON_KEY_ENROLLMENTS);
-        json_value_free(root_value);
-        root_value = NULL;
+        //in future, add logic here to decide which toJson function is used  depending on bulk_op->type
+        TO_JSON_FUNCTION element_toJson = individualEnrollment_toJson;
+
+        if (json_serialize_and_set_struct_array(root_object, BULK_ENROLLMENT_OPERATION_JSON_KEY_ENROLLMENTS, bulk_op->enrollments, bulk_op->num_enrollments, element_toJson) != 0)
+        {
+            LogError("Failed to set '%s' in JSON string", BULK_ENROLLMENT_OPERATION_JSON_KEY_ENROLLMENTS);
+            json_value_free(root_value);
+            root_value = NULL;
+        }
     }
 
     return root_value;
@@ -188,7 +194,7 @@ char* bulkOperation_serializeToJson(const PROVISIONING_BULK_OPERATION* bulk_op)
     char* serialized_string = NULL;
     JSON_Value* root_value = NULL;
 
-    if (bulk_op == NULL || bulk_op->enrollments == NULL)
+    if (bulk_op == NULL || bulk_op->enrollments == NULL || bulk_op->num_enrollments < 1)
     {
         LogError("Invalid bulk operation");
     }
