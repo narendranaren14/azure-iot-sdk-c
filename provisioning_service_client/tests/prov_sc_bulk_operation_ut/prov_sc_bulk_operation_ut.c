@@ -9,8 +9,6 @@
 #include <stddef.h>
 #endif
 
-#include <vld.h>
-
 #define UNREFERENCED_PARAMETER(x) x
 
 void* real_malloc(size_t size)
@@ -79,9 +77,14 @@ static void on_umock_c_error(UMOCK_C_ERROR_CODE error_code)
 //Control Parameters
 static char* DUMMY_JSON = "{\"json\":\"dummy\"}";
 static const char* DUMMY_STRING = "dummy";
+static int DUMMY_NUM = 4747;
+
+//Toggles
+static bool error_arr_is_empty = false;
 
 #define TEST_JSON_VALUE (JSON_Value*)0x11111111
 #define TEST_JSON_OBJECT (JSON_Object*)0x11111112
+#define TEST_ARRAY_SIZE (size_t)5
 
 static int my_mallocAndStrcpy_s(char** destination, const char* source)
 {
@@ -89,6 +92,40 @@ static int my_mallocAndStrcpy_s(char** destination, const char* source)
     size_t src_len = strlen(source);
     *destination = (char*)real_malloc(src_len + 1);
     strcpy(*destination, source);
+    return 0;
+}
+
+static int my_copy_json_string_field(char** dest, JSON_Object* root_object, const char* json_key)
+{
+    UNREFERENCED_PARAMETER(root_object);
+    UNREFERENCED_PARAMETER(json_key);
+
+    my_mallocAndStrcpy_s(dest, DUMMY_STRING);
+
+    return 0;
+}
+
+static int my_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_len, JSON_Object* root_object, const char* json_key, FROM_JSON_FUNCTION element_fromJson)
+{
+    UNREFERENCED_PARAMETER(root_object);
+    UNREFERENCED_PARAMETER(json_key);
+    UNREFERENCED_PARAMETER(element_fromJson);
+
+    if (error_arr_is_empty)
+    {
+        *dest_len = 0;
+        *dest_arr = NULL;
+    }
+    else
+    {
+        *dest_len = TEST_ARRAY_SIZE;
+        *dest_arr = real_malloc(*dest_len * sizeof(PROVISIONING_BULK_OPERATION_ERROR*));
+        for (size_t i = 0; i < *dest_len; i++)
+        {
+            (*dest_arr)[i] = real_malloc(sizeof(PROVISIONING_BULK_OPERATION));
+            memset((*dest_arr)[i], 0, sizeof(PROVISIONING_BULK_OPERATION));
+        }
+    }
     return 0;
 }
 
@@ -134,13 +171,20 @@ static void register_global_mocks()
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(json_object_set_number, JSONFailure);
     REGISTER_GLOBAL_MOCK_RETURN(json_object_get_boolean, 0);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(json_object_get_boolean, -1);
+    REGISTER_GLOBAL_MOCK_RETURN(json_object_get_number, DUMMY_NUM);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(json_object_get_number, 0);
 
     //shared helpers
     REGISTER_GLOBAL_MOCK_RETURN(json_serialize_and_set_struct_array, 0);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(json_serialize_and_set_struct_array, __FAILURE__);
+    REGISTER_GLOBAL_MOCK_HOOK(json_deserialize_and_get_struct_array, my_deserialize_and_get_struct_array);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(json_deserialize_and_get_struct_array, __FAILURE__);
+    REGISTER_GLOBAL_MOCK_HOOK(copy_json_string_field, my_copy_json_string_field);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(copy_json_string_field, __FAILURE__);
 
     //types
     REGISTER_UMOCK_ALIAS_TYPE(TO_JSON_FUNCTION, void*);
+    REGISTER_UMOCK_ALIAS_TYPE(FROM_JSON_FUNCTION, void*);
 }
 
 BEGIN_TEST_SUITE(prov_sc_bulk_operation_ut)
@@ -339,6 +383,84 @@ TEST_FUNCTION(bulkOperation_serializeToJson_error_ie)
     free_dummy_enrollment_list(bulk_op.enrollments);
 }
 
+TEST_FUNCTION(bulkOperationError_fromJson_null)
+{
+    //arrange
+
+    //act
+    PROVISIONING_BULK_OPERATION_ERROR* err = bulkOperationError_fromJson(NULL);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_IS_NULL(err);
+
+    //cleanup
+}
+
+TEST_FUNCTION(bulkOperationError_fromJson_success)
+{
+    //arrange
+    STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
+    STRICT_EXPECTED_CALL(copy_json_string_field(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(copy_json_string_field(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(json_object_get_number(IGNORED_PTR_ARG, IGNORED_PTR_ARG));
+
+    //act
+    PROVISIONING_BULK_OPERATION_ERROR* err = bulkOperationError_fromJson(TEST_JSON_OBJECT);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_IS_NOT_NULL(err);
+    ASSERT_ARE_EQUAL(char_ptr, DUMMY_STRING, err->registration_id);
+    ASSERT_ARE_EQUAL(char_ptr, DUMMY_STRING, err->error_status);
+    ASSERT_ARE_EQUAL(size_t, DUMMY_NUM, err->error_code);
+
+    //cleanup
+    free(err->registration_id);
+    free(err->error_status);
+    free(err);
+}
+
+TEST_FUNCTION(bulkOperationError_fromJson_error)
+{
+    //arrange
+    int negativeTestsInitResult = umock_c_negative_tests_init();
+    ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+
+    STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
+    STRICT_EXPECTED_CALL(copy_json_string_field(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(copy_json_string_field(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(json_object_get_number(IGNORED_PTR_ARG, IGNORED_PTR_ARG));
+    umock_c_negative_tests_snapshot();
+
+    size_t calls_cannot_fail[] = { 3 };
+    size_t num_cannot_fail = sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0]);
+    size_t count = umock_c_negative_tests_call_count();
+    size_t test_num = 0;
+    size_t test_max = count - num_cannot_fail;
+
+    for (size_t index = 0; index < count; index++)
+    {
+        if (should_skip_index(index, calls_cannot_fail, num_cannot_fail) != 0)
+            continue;
+        test_num++;
+
+        char tmp_msg[128];
+        sprintf(tmp_msg, "bulkOperationError_fromJson_error failure in test %zu/%zu", test_num, test_max);
+
+        umock_c_negative_tests_reset();
+        umock_c_negative_tests_fail_call(index);
+
+        //act
+        PROVISIONING_BULK_OPERATION_ERROR* err = bulkOperationError_fromJson(TEST_JSON_OBJECT);
+
+        //assert
+        ASSERT_IS_NULL_WITH_MSG(err, tmp_msg);
+    }
+
+    //cleanup
+}
+
 TEST_FUNCTION(bulkOperationResult_deserializeFromJson_null_json)
 {
     //arrange
@@ -351,6 +473,194 @@ TEST_FUNCTION(bulkOperationResult_deserializeFromJson_null_json)
     ASSERT_IS_NULL(bulk_res);
 
     //cleanup
+}
+
+TEST_FUNCTION(bulkOperationResult_deserializeFromJson_success_has_errors)
+{
+    //arrange
+    error_arr_is_empty = false;
+    STRICT_EXPECTED_CALL(json_parse_string(DUMMY_JSON));
+    STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
+    STRICT_EXPECTED_CALL(json_object_get_boolean(IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(0);
+    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulkOperationError_fromJson));
+    STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
+
+    //act
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res = bulkOperationResult_deserializeFromJson(DUMMY_JSON);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_IS_NOT_NULL(bulk_res);
+    ASSERT_IS_NOT_NULL(bulk_res->errors);
+    ASSERT_ARE_EQUAL(size_t, TEST_ARRAY_SIZE, bulk_res->num_errors);
+    ASSERT_IS_FALSE(bulk_res->is_successful);
+
+    //cleanup
+    bulkOperationResult_free(bulk_res);
+}
+
+TEST_FUNCTION(bulkOperationResult_deserializeFromJson_error_has_errors)
+{
+    //arrange
+    int negativeTestsInitResult = umock_c_negative_tests_init();
+    ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+
+    error_arr_is_empty = false;
+    STRICT_EXPECTED_CALL(json_parse_string(DUMMY_JSON));
+    STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
+    STRICT_EXPECTED_CALL(json_object_get_boolean(IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(0);
+    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulkOperationError_fromJson));
+    STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
+    umock_c_negative_tests_snapshot();
+
+    size_t calls_cannot_fail[] = { 5 };
+    size_t num_cannot_fail = sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0]);
+    size_t count = umock_c_negative_tests_call_count();
+    size_t test_num = 0;
+    size_t test_max = count - num_cannot_fail;
+
+    for (size_t index = 0; index < count; index++)
+    {
+        if (should_skip_index(index, calls_cannot_fail, num_cannot_fail) != 0)
+            continue;
+        test_num++;
+
+        char tmp_msg[128];
+        sprintf(tmp_msg, "bulkOperationResult_deserializeFromJson_error_has_errors failure in test %zu/%zu", test_num, test_max);
+
+        umock_c_negative_tests_reset();
+        umock_c_negative_tests_fail_call(index);
+
+        //act
+        PROVISIONING_BULK_OPERATION_RESULT* bulk_res = bulkOperationResult_deserializeFromJson(DUMMY_JSON);
+
+        //assert
+        ASSERT_IS_NULL_WITH_MSG(bulk_res, tmp_msg);
+    }
+
+    //cleanup
+}
+
+TEST_FUNCTION(bulkOperationResult_deserializeFromJson_success_no_errors)
+{
+    //arrange
+    error_arr_is_empty = true;
+    STRICT_EXPECTED_CALL(json_parse_string(DUMMY_JSON));
+    STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
+    STRICT_EXPECTED_CALL(json_object_get_boolean(IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(1);
+    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulkOperationError_fromJson));
+    STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
+
+    //act
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res = bulkOperationResult_deserializeFromJson(DUMMY_JSON);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_IS_NOT_NULL(bulk_res);
+    ASSERT_IS_NULL(bulk_res->errors);
+    ASSERT_ARE_EQUAL(size_t, 0, bulk_res->num_errors);
+    ASSERT_IS_TRUE(bulk_res->is_successful);
+
+    //cleanup
+    bulkOperationResult_free(bulk_res);
+}
+
+TEST_FUNCTION(bulkOperationResult_deserializeFromJson_error_no_errors)
+{
+    //arrange
+    int negativeTestsInitResult = umock_c_negative_tests_init();
+    ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+
+    error_arr_is_empty = true;
+    STRICT_EXPECTED_CALL(json_parse_string(DUMMY_JSON));
+    STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
+    STRICT_EXPECTED_CALL(json_object_get_boolean(IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(1);
+    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulkOperationError_fromJson));
+    STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
+    umock_c_negative_tests_snapshot();
+
+    size_t calls_cannot_fail[] = { 5 };
+    size_t num_cannot_fail = sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0]);
+    size_t count = umock_c_negative_tests_call_count();
+    size_t test_num = 0;
+    size_t test_max = count - num_cannot_fail;
+
+    for (size_t index = 0; index < count; index++)
+    {
+        if (should_skip_index(index, calls_cannot_fail, num_cannot_fail) != 0)
+            continue;
+        test_num++;
+
+        char tmp_msg[128];
+        sprintf(tmp_msg, "bulkOperationResult_deserializeFromJson_error_no_errors failure in test %zu/%zu", test_num, test_max);
+
+        umock_c_negative_tests_reset();
+        umock_c_negative_tests_fail_call(index);
+
+        //act
+        PROVISIONING_BULK_OPERATION_RESULT* bulk_res = bulkOperationResult_deserializeFromJson(DUMMY_JSON);
+
+        //assert
+        ASSERT_IS_NULL_WITH_MSG(bulk_res, tmp_msg);
+    }
+
+    //cleanup
+}
+
+TEST_FUNCTION(bulkOperationResult_free_null)
+{
+    //arrange
+
+    //act
+    bulkOperationResult_free(NULL);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+}
+
+TEST_FUNCTION(bulkOperationResult_free_with_errors)
+{
+    //arrange
+    error_arr_is_empty = false;
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res = bulkOperationResult_deserializeFromJson(DUMMY_JSON);
+    umock_c_reset_all_calls();
+
+    for (size_t i = 0; i < bulk_res->num_errors; i++)
+    {
+        STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
+        STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
+        STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
+    }
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
+
+    //act
+    bulkOperationResult_free(bulk_res);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+}
+
+TEST_FUNCTION(bulkOperationResult_free_no_errors)
+{
+    //arrange
+    error_arr_is_empty = true;
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res = bulkOperationResult_deserializeFromJson(DUMMY_JSON);
+    umock_c_reset_all_calls();
+
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
+
+    //act
+    bulkOperationResult_free(bulk_res);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
 }
 
 END_TEST_SUITE(prov_sc_bulk_operation_ut);

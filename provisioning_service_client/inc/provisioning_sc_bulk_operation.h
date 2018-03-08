@@ -50,6 +50,12 @@ typedef struct PROVISIONING_BULK_OPERATION_TAG
     PROVISIONING_BULK_OPERATION_TYPE type;
 } PROVISIONING_BULK_OPERATION;
 
+
+MOCKABLE_FUNCTION(, void, bulkOperationResult_free, PROVISIONING_BULK_OPERATION_RESULT*, bulk_op_result);
+
+/* ---INTERNAL USAGE ONLY--- */
+MOCKABLE_FUNCTION(, PROVISIONING_BULK_OPERATION_ERROR*, bulkOperationError_fromJson, JSON_Object*, root_object);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

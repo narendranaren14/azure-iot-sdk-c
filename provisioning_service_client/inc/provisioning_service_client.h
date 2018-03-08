@@ -122,7 +122,7 @@ MOCKABLE_FUNCTION(, int, prov_sc_get_individual_enrollment, PROVISIONING_SERVICE
 ////////MOCKABLE_FUNCTION(, PROVISIONING_BULK_OPERATION_RESULT, prov_sc_run_individual_enrollment_bulk_op, PROVISIONING_SERVICE_CLIENT_HANDLE, prov_client, PROVISIONING_BULK_OPERATION_MODE, mode, INDIVIDUAL_ENROLLMENT_HANDLE*, enrollment_list, size_t, list_len);
 
 
-MOCKABLE_FUNCTION(, int, prov_sc_run_individual_enrollment_bulk_operation, PROVISIONING_SERVICE_CLIENT_HANDLE, prov_client, PROVISIONING_BULK_OPERATION*, bulk_op_ptr, PROVISIONING_BULK_OPERATION_RESULT*, bulk_res_ptr);
+MOCKABLE_FUNCTION(, int, prov_sc_run_individual_enrollment_bulk_operation, PROVISIONING_SERVICE_CLIENT_HANDLE, prov_client, PROVISIONING_BULK_OPERATION*, bulk_op, PROVISIONING_BULK_OPERATION_RESULT**, bulk_res_ptr);
 
 
 /** @brief  Creates or updates a device enrollment group record on the Provisioning Service.

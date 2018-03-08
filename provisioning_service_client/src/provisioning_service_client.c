@@ -585,7 +585,7 @@ static int prov_sc_get_record(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, co
     return result;
 }
 
-static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_BULK_OPERATION* bulk_op_ptr, PROVISIONING_BULK_OPERATION_RESULT* bulk_res_ptr , const char* path_format)
+static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_BULK_OPERATION* bulk_op, PROVISIONING_BULK_OPERATION_RESULT** bulk_res_ptr , const char* path_format)
 {
     int result = 0;
 
@@ -594,15 +594,20 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
         LogError("Invalid Provisioning Client Handle");
         result = __FAILURE__;
     }
-    else if (bulk_op_ptr == NULL)
+    else if (bulk_op == NULL)
     {
         LogError("Invalid Bulk Op");
+        result = __FAILURE__;
+    }
+    else if (bulk_res_ptr == NULL)
+    {
+        LogError("Invalid Bulk Op Result pointer");
         result = __FAILURE__;
     }
     else
     {
         char* content;
-        if ((content = bulkOperation_serializeToJson(bulk_op_ptr)) == NULL)
+        if ((content = bulkOperation_serializeToJson(bulk_op)) == NULL)
         {
             LogError("Failure serializing bulk operation");
             result = __FAILURE__;
@@ -628,9 +633,7 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
                     
                     if (result == 0)
                     {
-                        //if ((*bulk_res_ptr = *bulkOperationResult_deserializeFromJson(prov_client->response)) == NULL)
-                        *bulk_res_ptr = *bulkOperationResult_deserializeFromJson(prov_client->response);
-                        if (bulk_res_ptr == NULL)
+                        if ((*bulk_res_ptr = bulkOperationResult_deserializeFromJson(prov_client->response)) == NULL)
                         {
                             LogError("Failure deserializing bulk operation result");
                             result = __FAILURE__;
@@ -918,9 +921,9 @@ int prov_sc_get_individual_enrollment(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
     return prov_sc_get_record(prov_client, reg_id, enrollment_ptr, getVector_individualEnrollment(), INDV_ENROLL_PROVISION_PATH_FMT);
 }
 
-int prov_sc_run_individual_enrollment_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_BULK_OPERATION* bulk_op_ptr, PROVISIONING_BULK_OPERATION_RESULT* bulk_res_ptr)
+int prov_sc_run_individual_enrollment_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_BULK_OPERATION* bulk_op, PROVISIONING_BULK_OPERATION_RESULT** bulk_res_ptr)
 {
-    return prov_sc_run_bulk_operation(prov_client, bulk_op_ptr, bulk_res_ptr, INDV_ENROLL_BULK_PATH_FMT);
+    return prov_sc_run_bulk_operation(prov_client, bulk_op, bulk_res_ptr, INDV_ENROLL_BULK_PATH_FMT);
 }
 
 //int prov_sc_individual_enrollment_query_get_results(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_QUERY* query)

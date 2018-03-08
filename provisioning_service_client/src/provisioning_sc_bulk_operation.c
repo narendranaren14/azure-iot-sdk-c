@@ -92,7 +92,7 @@ static JSON_Value* bulkOperation_toJson(const PROVISIONING_BULK_OPERATION* bulk_
     return root_value;
 }
 
-static void bulkOperationError_destroy(PROVISIONING_BULK_OPERATION_ERROR* error)
+static void bulkOperationError_free(PROVISIONING_BULK_OPERATION_ERROR* error)
 {
     if (error != NULL)
     {
@@ -102,7 +102,7 @@ static void bulkOperationError_destroy(PROVISIONING_BULK_OPERATION_ERROR* error)
     }
 }
 
-static PROVISIONING_BULK_OPERATION_ERROR* bulkOperationError_fromJson(JSON_Object* root_object)
+PROVISIONING_BULK_OPERATION_ERROR* bulkOperationError_fromJson(JSON_Object* root_object)
 {
     PROVISIONING_BULK_OPERATION_ERROR* new_error = NULL;
 
@@ -121,13 +121,13 @@ static PROVISIONING_BULK_OPERATION_ERROR* bulkOperationError_fromJson(JSON_Objec
         if (copy_json_string_field(&(new_error->registration_id), root_object, BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_REG_ID) != 0)
         {
             LogError("Failed to set '%s' in Bulk Operation Error", BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_REG_ID);
-            bulkOperationError_destroy(new_error);
+            bulkOperationError_free(new_error);
             new_error = NULL;
         }
         else if (copy_json_string_field(&(new_error->error_status), root_object, BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_ERROR_STATUS) != 0)
         {
             LogError("Failed to set '%s' in Bulk Operation Error", BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_ERROR_STATUS);
-            bulkOperationError_destroy(new_error);
+            bulkOperationError_free(new_error);
             new_error = NULL;
         }
         else
@@ -137,17 +137,6 @@ static PROVISIONING_BULK_OPERATION_ERROR* bulkOperationError_fromJson(JSON_Objec
     }
 
     return new_error;
-}
-
-static void bulkOperationResult_destroy(PROVISIONING_BULK_OPERATION_RESULT* bulk_op_result)
-{
-    if (bulk_op_result != NULL && bulk_op_result->num_errors > 0)
-    {
-        for (size_t i = 0; i < bulk_op_result->num_errors; i++)
-        {
-            bulkOperationError_destroy(bulk_op_result->errors[i]);
-        }
-    }
 }
 
 static PROVISIONING_BULK_OPERATION_RESULT* bulkOperationResult_fromJson(JSON_Object* root_object)
@@ -170,13 +159,13 @@ static PROVISIONING_BULK_OPERATION_RESULT* bulkOperationResult_fromJson(JSON_Obj
         if ((bool_res = json_object_get_boolean(root_object, BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_IS_SUCCESSFUL)) == -1)
         {
             LogError("Failed to set '%s' in Bulk Operation Result", BULK_ENROLLMENT_OPERATION_ERROR_JSON_KEY_REG_ID);
-            bulkOperationResult_destroy(new_result);
+            bulkOperationResult_free(new_result);
             new_result = NULL;
         }
         else if (json_deserialize_and_get_struct_array(&(new_result->errors), &(new_result->num_errors), root_object, BULK_ENROLLMENT_OPERATION_RESULT_JSON_KEY_ERRORS, bulkOperationError_fromJson) != 0)
         {
             LogError("Failed to deserialize Bulk Operation Errors");
-            bulkOperationResult_destroy(new_result);
+            bulkOperationResult_free(new_result);
             new_result = NULL;
         }
         else
@@ -256,6 +245,18 @@ PROVISIONING_BULK_OPERATION_RESULT* bulkOperationResult_deserializeFromJson(cons
     return new_result;
 }
 
-
-
-//PROVISIONING_BULK_OPERATION_RESULT
+void bulkOperationResult_free(PROVISIONING_BULK_OPERATION_RESULT* bulk_op_result)
+{
+    if (bulk_op_result != NULL)
+    {
+        if (bulk_op_result->num_errors > 0)
+        {
+            for (size_t i = 0; i < bulk_op_result->num_errors; i++)
+            {
+                bulkOperationError_free(bulk_op_result->errors[i]);
+            }
+            free(bulk_op_result->errors);
+        }
+        free(bulk_op_result);
+    }
+}

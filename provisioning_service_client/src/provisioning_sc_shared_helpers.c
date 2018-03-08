@@ -230,28 +230,20 @@ int json_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_len, JS
 
     JSON_Array* json_arr = json_object_get_array(root_object, json_key);
 
-    if (dest_arr == NULL)
+    if (dest_arr == NULL || dest_len == NULL)
     {
-        LogError("Destination array is NULL");
+        LogError("NULL pointer given");
         result = __FAILURE__;
     }
     else
     {
-        size_t len;
-        if ((len = json_array_get_count(json_arr)) <= 0)
+        if ((*dest_len = json_array_get_count(json_arr)) > 0)
         {
-            LogError("No items in JSON array");
-            result = __FAILURE__;
-        }
-        else if ((*dest_arr = struct_array_fromJson(json_arr, len, element_fromJson)) == NULL)
-        {
-            LogError("Failed to deserialize from JSON");
-            result = __FAILURE__;
-        }
-        else
-        {
-            result = 0;
-            *dest_len = len;
+            if ((*dest_arr = struct_array_fromJson(json_arr, *dest_len, element_fromJson)) == NULL)
+            {
+                LogError("Failed to deserialize from JSON");
+                result = __FAILURE__;
+            }
         }
     }
 
