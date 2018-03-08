@@ -262,6 +262,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_null_enrollments)
 {
     //arrange
     PROVISIONING_BULK_OPERATION bulk_op;
+    bulk_op.version = PROVISIONING_BULK_OPERATION_VERSION_1;
     bulk_op.enrollments = NULL;
     bulk_op.num_enrollments = 2;
     bulk_op.mode = BULK_OP_CREATE;
@@ -281,8 +282,30 @@ TEST_FUNCTION(bulkOperation_serializeToJson_invalid_size)
 {
     //arrange
     PROVISIONING_BULK_OPERATION bulk_op;
+    bulk_op.version = PROVISIONING_BULK_OPERATION_VERSION_1;
     bulk_op.enrollments = create_dummy_enrollment_list(2);
     bulk_op.num_enrollments = 0;
+    bulk_op.mode = BULK_OP_CREATE;
+    bulk_op.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
+
+    //act
+    char* json = bulkOperation_serializeToJson(&bulk_op);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_IS_NULL(json);
+
+    //cleanup
+    free_dummy_enrollment_list(bulk_op.enrollments);
+}
+
+TEST_FUNCTION(bulkOperation_serializeToJson_invalid_version)
+{
+    //arrange
+    PROVISIONING_BULK_OPERATION bulk_op;
+    bulk_op.version = -1;
+    bulk_op.enrollments = create_dummy_enrollment_list(2);
+    bulk_op.num_enrollments = 2;
     bulk_op.mode = BULK_OP_CREATE;
     bulk_op.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
 
@@ -301,6 +324,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_success_ie)
 {
     //arrange
     PROVISIONING_BULK_OPERATION bulk_op;
+    bulk_op.version = PROVISIONING_BULK_OPERATION_VERSION_1;
     bulk_op.enrollments = create_dummy_enrollment_list(2);
     bulk_op.num_enrollments = 2;
     bulk_op.mode = BULK_OP_CREATE;
@@ -337,6 +361,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_error_ie)
     ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
 
     PROVISIONING_BULK_OPERATION bulk_op;
+    bulk_op.version = -1;
     bulk_op.enrollments = create_dummy_enrollment_list(2);
     bulk_op.num_enrollments = 2;
     bulk_op.mode = BULK_OP_CREATE;

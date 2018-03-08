@@ -187,6 +187,10 @@ char* bulkOperation_serializeToJson(const PROVISIONING_BULK_OPERATION* bulk_op)
     {
         LogError("Invalid bulk operation");
     }
+    else if (bulk_op->version != PROVISIONING_BULK_OPERATION_VERSION_1)
+    {
+        LogError("Invalid Version");
+    }
     else if ((root_value = bulkOperation_toJson(bulk_op)) == NULL)
     {
         LogError("Creating json object failed");

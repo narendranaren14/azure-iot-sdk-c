@@ -15,6 +15,8 @@ extern "C" {
 #include "azure_c_shared_utility/macro_utils.h"
 #include "parson.h"
 
+#define PROVISIONING_BULK_OPERATION_VERSION_1 (int)1
+
 #define PROVISIONING_BULK_OPERATION_MODE_VALUES \
 BULK_OP_CREATE, \
 BULK_OP_UPDATE, \
@@ -44,6 +46,7 @@ typedef struct PROVISIONING_BULK_OPERATION_RESULT_TAG
 
 typedef struct PROVISIONING_BULK_OPERATION_TAG
 {
+    int version;
     PROVISIONING_BULK_OPERATION_MODE mode;
     void** enrollments;
     size_t num_enrollments;
