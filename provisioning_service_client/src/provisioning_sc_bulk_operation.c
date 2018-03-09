@@ -174,7 +174,7 @@ char* bulkOperation_serializeToJson(const PROVISIONING_BULK_OPERATION* bulk_op)
     char* serialized_string = NULL;
     JSON_Value* root_value = NULL;
 
-    if (bulk_op == NULL || bulk_op->num_enrollments < 1)
+    if (bulk_op == NULL || bulk_op->num_enrollments < 1 || bulk_op->enrollments.ie == NULL)
     {
         LogError("Invalid bulk operation");
     }

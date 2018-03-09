@@ -38,7 +38,7 @@ int main()
     PROVISIONING_BULK_OPERATION bulkop = { 0 };
     bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
     bulkop.mode = BULK_OP_CREATE;
-    bulkop.enrollments = ie_list;
+    bulkop.enrollments.ie = ie_list;
     bulkop.num_enrollments = 2;
 
     /* ---Define a pointer that can be filled with results--- */

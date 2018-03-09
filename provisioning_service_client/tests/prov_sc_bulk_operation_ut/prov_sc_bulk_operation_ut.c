@@ -185,6 +185,7 @@ static void register_global_mocks()
     //types
     REGISTER_UMOCK_ALIAS_TYPE(TO_JSON_FUNCTION, void*);
     REGISTER_UMOCK_ALIAS_TYPE(FROM_JSON_FUNCTION, void*);
+    REGISTER_UMOCK_ALIAS_TYPE(void**, void*);
     REGISTER_UMOCK_ALIAS_TYPE(INDIVIDUAL_ENROLLMENT_HANDLE*, void**);
 }
 

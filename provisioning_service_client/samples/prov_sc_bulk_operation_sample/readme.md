@@ -20,6 +20,10 @@ This is a quick tutorial with the steps to create and delete Individual Enrollme
 
     2. This sample uses TPM attestations. You can also use X509 Attestations, by following the instructions laid out in the Individual Enrollment    sample instead.
 
+        1. You must use an endorsement key for a TPM attestation.  If you do not have a physical device with a TPM, you can create a Registration ID yourself, and use the following endorsement key for testing purposes:
+
+            ```AToAAQALAAMAsgAgg3GXZ0SEs/gakMyNRqXXJP1S124GUgtk8qHaGzMUaaoABgCAAEMAEAgAAAAAAAEAxsj2gUScTk1UjuioeTlfGYZrrimExB+bScH75adUMRIi2UOMxG1kw4y+9RW/IVoMl4e620VxZad0ARX2gUqVjYO7KPVt3dyKhZS3dkcvfBisBhP1XH9B33VqHG9SHnbnQXdBUaCgKAfxome8UmBKfe+naTsE5fkvjb/do3/dD6l4sGBwFCnKRdln4XpM03zLpoHFao8zOwt8l/uP3qUIxmCYv9A7m69Ms+5/pCkTu/rK4mRDsfhZ0QLfbzVI6zQFOKF/rwsfBtFeWlWtcuJMKlXdD8TXWElTzgh7JS4qhFzreL0c1mI0GCj+Aws0usZh7dLIVPnlgZcBhgy1SSDQMQ==```
+
         2. Replace the `[Registration Id #1]` and `[Registration Id #2]` each with a unique Reigstration ID, and `[Endorsement Key]` with the Endorsement Key. Note that in this example for simplicity we will use the same endorsement key for both individual enrollments, but you can (and should) use different ones.
             ```c
             const char* endorsementKey = "[Endorsement Key]";
