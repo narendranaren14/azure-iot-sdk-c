@@ -13,6 +13,7 @@ extern "C" {
 
 #include "azure_c_shared_utility/umock_c_prod.h"
 #include "azure_c_shared_utility/macro_utils.h"
+#include "provisioning_sc_models.h"
 #include "parson.h"
 
 #define PROVISIONING_BULK_OPERATION_VERSION_1 (int)1
@@ -48,7 +49,9 @@ typedef struct PROVISIONING_BULK_OPERATION_TAG
 {
     int version;
     PROVISIONING_BULK_OPERATION_MODE mode;
-    void** enrollments;
+    union {
+        INDIVIDUAL_ENROLLMENT_HANDLE* ie;
+    } enrollments;
     size_t num_enrollments;
     PROVISIONING_BULK_OPERATION_TYPE type;
 } PROVISIONING_BULK_OPERATION;

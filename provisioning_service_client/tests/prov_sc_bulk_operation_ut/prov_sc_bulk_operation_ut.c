@@ -129,14 +129,14 @@ static int my_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_le
     return 0;
 }
 
-static void** create_dummy_enrollment_list(size_t len)
+static INDIVIDUAL_ENROLLMENT_HANDLE* create_dummy_enrollment_list(size_t len)
 {
-    void** ret;
-    ret = (void**)real_malloc(len * sizeof(void*));
+    INDIVIDUAL_ENROLLMENT_HANDLE* ret;
+    ret = (INDIVIDUAL_ENROLLMENT_HANDLE*)real_malloc(len * sizeof(INDIVIDUAL_ENROLLMENT_HANDLE));
     return ret;
 }
 
-static void free_dummy_enrollment_list(void** enrollments)
+static void free_dummy_enrollment_list(INDIVIDUAL_ENROLLMENT_HANDLE* enrollments)
 {
     real_free(enrollments);
 }
@@ -185,6 +185,7 @@ static void register_global_mocks()
     //types
     REGISTER_UMOCK_ALIAS_TYPE(TO_JSON_FUNCTION, void*);
     REGISTER_UMOCK_ALIAS_TYPE(FROM_JSON_FUNCTION, void*);
+    REGISTER_UMOCK_ALIAS_TYPE(INDIVIDUAL_ENROLLMENT_HANDLE*, void**);
 }
 
 BEGIN_TEST_SUITE(prov_sc_bulk_operation_ut)
@@ -263,7 +264,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_null_enrollments)
     //arrange
     PROVISIONING_BULK_OPERATION bulk_op;
     bulk_op.version = PROVISIONING_BULK_OPERATION_VERSION_1;
-    bulk_op.enrollments = NULL;
+    bulk_op.enrollments.ie = NULL;
     bulk_op.num_enrollments = 2;
     bulk_op.mode = BULK_OP_CREATE;
     bulk_op.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
@@ -283,7 +284,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_invalid_size)
     //arrange
     PROVISIONING_BULK_OPERATION bulk_op;
     bulk_op.version = PROVISIONING_BULK_OPERATION_VERSION_1;
-    bulk_op.enrollments = create_dummy_enrollment_list(2);
+    bulk_op.enrollments.ie = create_dummy_enrollment_list(2);
     bulk_op.num_enrollments = 0;
     bulk_op.mode = BULK_OP_CREATE;
     bulk_op.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
@@ -296,7 +297,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_invalid_size)
     ASSERT_IS_NULL(json);
 
     //cleanup
-    free_dummy_enrollment_list(bulk_op.enrollments);
+    free_dummy_enrollment_list(bulk_op.enrollments.ie);
 }
 
 TEST_FUNCTION(bulkOperation_serializeToJson_invalid_version)
@@ -304,7 +305,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_invalid_version)
     //arrange
     PROVISIONING_BULK_OPERATION bulk_op;
     bulk_op.version = -1;
-    bulk_op.enrollments = create_dummy_enrollment_list(2);
+    bulk_op.enrollments.ie = create_dummy_enrollment_list(2);
     bulk_op.num_enrollments = 2;
     bulk_op.mode = BULK_OP_CREATE;
     bulk_op.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
@@ -317,7 +318,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_invalid_version)
     ASSERT_IS_NULL(json);
 
     //cleanup
-    free_dummy_enrollment_list(bulk_op.enrollments);
+    free_dummy_enrollment_list(bulk_op.enrollments.ie);
 }
 
 TEST_FUNCTION(bulkOperation_serializeToJson_success_ie)
@@ -325,7 +326,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_success_ie)
     //arrange
     PROVISIONING_BULK_OPERATION bulk_op;
     bulk_op.version = PROVISIONING_BULK_OPERATION_VERSION_1;
-    bulk_op.enrollments = create_dummy_enrollment_list(2);
+    bulk_op.enrollments.ie = create_dummy_enrollment_list(2);
     bulk_op.num_enrollments = 2;
     bulk_op.mode = BULK_OP_CREATE;
     bulk_op.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
@@ -335,7 +336,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_success_ie)
     STRICT_EXPECTED_CALL(json_value_init_object());
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_object_set_string(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(json_serialize_and_set_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulk_op.enrollments, bulk_op.num_enrollments, (TO_JSON_FUNCTION)individualEnrollment_toJson));
+    STRICT_EXPECTED_CALL(json_serialize_and_set_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, (void**)bulk_op.enrollments.ie, bulk_op.num_enrollments, (TO_JSON_FUNCTION)individualEnrollment_toJson));
     STRICT_EXPECTED_CALL(json_serialize_to_string(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(mallocAndStrcpy_s(IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
@@ -350,7 +351,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_success_ie)
     ASSERT_ARE_EQUAL(char_ptr, DUMMY_JSON, json);
 
     //cleanup
-    free_dummy_enrollment_list(bulk_op.enrollments);
+    free_dummy_enrollment_list(bulk_op.enrollments.ie);
     free(json);
 }
 
@@ -362,7 +363,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_error_ie)
 
     PROVISIONING_BULK_OPERATION bulk_op;
     bulk_op.version = -1;
-    bulk_op.enrollments = create_dummy_enrollment_list(2);
+    bulk_op.enrollments.ie = create_dummy_enrollment_list(2);
     bulk_op.num_enrollments = 2;
     bulk_op.mode = BULK_OP_CREATE;
     bulk_op.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
@@ -372,7 +373,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_error_ie)
     STRICT_EXPECTED_CALL(json_value_init_object());
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_object_set_string(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(json_serialize_and_set_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulk_op.enrollments, bulk_op.num_enrollments, (TO_JSON_FUNCTION)individualEnrollment_toJson));
+    STRICT_EXPECTED_CALL(json_serialize_and_set_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, (void**)bulk_op.enrollments.ie, bulk_op.num_enrollments, (TO_JSON_FUNCTION)individualEnrollment_toJson));
     STRICT_EXPECTED_CALL(json_serialize_to_string(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(mallocAndStrcpy_s(IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
@@ -405,7 +406,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_error_ie)
     }
 
     //cleanup
-    free_dummy_enrollment_list(bulk_op.enrollments);
+    free_dummy_enrollment_list(bulk_op.enrollments.ie);
 }
 
 TEST_FUNCTION(bulkOperationError_fromJson_null)

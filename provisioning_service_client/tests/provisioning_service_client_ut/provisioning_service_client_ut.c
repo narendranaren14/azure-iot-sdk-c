@@ -3171,7 +3171,7 @@ TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_NULL_prov)
     INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = {TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2};
     PROVISIONING_BULK_OPERATION bulkop;
     bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
-    bulkop.enrollments = (void**)ie_arr;
+    bulkop.enrollments.ie = ie_arr;
     bulkop.mode = BULK_OP_CREATE;
     bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
     PROVISIONING_BULK_OPERATION_RESULT* bulk_res;
@@ -3213,7 +3213,7 @@ TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_NULL_bulk_res)
     INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = { TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 };
     PROVISIONING_BULK_OPERATION bulkop;
     bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
-    bulkop.enrollments = (void**)ie_arr;
+    bulkop.enrollments.ie = ie_arr;
     bulkop.mode = BULK_OP_CREATE;
     bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
     umock_c_reset_all_calls();
@@ -3237,7 +3237,7 @@ TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_invalid_bulkop_ve
     INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = { TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 };
     PROVISIONING_BULK_OPERATION bulkop;
     bulkop.version = 47474747;
-    bulkop.enrollments = (void**)ie_arr;
+    bulkop.enrollments.ie = ie_arr;
     bulkop.mode = BULK_OP_CREATE;
     bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
     PROVISIONING_BULK_OPERATION_RESULT* bulk_res;
@@ -3264,7 +3264,7 @@ TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_SUCCESS)
     INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = { TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 };
     PROVISIONING_BULK_OPERATION bulkop;
     bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
-    bulkop.enrollments = (void**)ie_arr;
+    bulkop.enrollments.ie = ie_arr;
     bulkop.mode = BULK_OP_CREATE;
     bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
     PROVISIONING_BULK_OPERATION_RESULT* bulk_res = NULL;
@@ -3306,7 +3306,7 @@ TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_ERROR)
     INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = { TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 };
     PROVISIONING_BULK_OPERATION bulkop;
     bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
-    bulkop.enrollments = (void**)ie_arr;
+    bulkop.enrollments.ie = ie_arr;
     bulkop.mode = BULK_OP_CREATE;
     bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
     PROVISIONING_BULK_OPERATION_RESULT* bulk_res = NULL;
