@@ -11,31 +11,60 @@ int main()
 {
     int result = 0;
 
-    const char* connectionString = "HostName=carter-dps-2.azure-devices-provisioning.net;SharedAccessKeyName=provisioningserviceowner;SharedAccessKey=uNqKlY3IR6fB+p78K9mck9PrDsF2uLYpt0r91Hq2gh0=";
-    const char* endorsementKey = "AToAAQALAAMAsgAgg3GXZ0SEs/gakMyNRqXXJP1S124GUgtk8qHaGzMUaaoABgCAAEMAEAgAAAAAAAEAxsj2gUScTk1UjuioeTlfGYZrrimExB+bScH75adUMRIi2UOMxG1kw4y+9RW/IVoMl4e620VxZad0ARX2gUqVjYO7KPVt3dyKhZS3dkcvfBisBhP1XH9B33VqHG9SHnbnQXdBUaCgKAfxome8UmBKfe+naTsE5fkvjb/do3/dD6l4sGBwFCnKRdln4XpM03zLpoHFao8zOwt8l/uP3qUIxmCYv9A7m69Ms+5/pCkTu/rK4mRDsfhZ0QLfbzVI6zQFOKF/rwsfBtFeWlWtcuJMKlXdD8TXWElTzgh7JS4qhFzreL0c1mI0GCj+Aws0usZh7dLIVPnlgZcBhgy1SSDQMQ==";
+    const char* connectionString = "[Connection String]";
+    const char* endorsementKey = "[Endorsement Key]";
+    const char* registrationId1 = "[Registration Id #1]";
+    const char* registrationId2 = "[Registration Id #2]";
 
-    const char* registrationId1 = "id1";
-    const char* registrationId2 = "id2";
+    /* ---This function must be called before anything else so that sockets work--- */
+    platform_init();
 
-    PROVISIONING_SERVICE_CLIENT_HANDLE prov_sc;
-
-    ATTESTATION_MECHANISM_HANDLE am = attestationMechanism_createWithTpm(endorsementKey, NULL);
-    INDIVIDUAL_ENROLLMENT_HANDLE ie1 = individualEnrollment_create(registrationId1, am);
-    INDIVIDUAL_ENROLLMENT_HANDLE ie2 = individualEnrollment_create(registrationId2, am);
+    /* ---Create a handle for accessing the Provisioning Service--- */
+    PROVISIONING_SERVICE_CLIENT_HANDLE prov_sc = prov_sc_create_from_connection_string(connectionString);
     
+    /* ---Optionally set connection options---*/
+    prov_sc_set_trace(prov_sc, TRACING_STATUS_ON);
+
+    /* ---Build the array of individual enrollments to run bulk operations on--- */
+    ATTESTATION_MECHANISM_HANDLE am1 = attestationMechanism_createWithTpm(endorsementKey, NULL);
+    ATTESTATION_MECHANISM_HANDLE am2 = attestationMechanism_createWithTpm(endorsementKey, NULL);
+    INDIVIDUAL_ENROLLMENT_HANDLE ie1 = individualEnrollment_create(registrationId1, am1);
+    INDIVIDUAL_ENROLLMENT_HANDLE ie2 = individualEnrollment_create(registrationId2, am2);  
     INDIVIDUAL_ENROLLMENT_HANDLE ie_list[2];
     ie_list[0] = ie1;
     ie_list[1] = ie2;
 
-    prov_sc = prov_sc_create_from_connection_string(connectionString);
-    prov_sc_set_trace(prov_sc, TRACING_STATUS_ON);
-
+    /* ---Build the bulk operation structure for creation--- */
     PROVISIONING_BULK_OPERATION bulkop = { 0 };
+    bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
     bulkop.mode = BULK_OP_CREATE;
     bulkop.enrollments = ie_list;
     bulkop.num_enrollments = 2;
 
-    prov_sc_run_individual_enrollment_bulk_operation(prov_sc, &bulkop);
+    /* ---Define a pointer that can be filled with results--- */
+    PROVISIONING_BULK_OPERATION_RESULT* bulkres;
+
+    /* ---Run the bulk operation to create enrollments--- */
+    prov_sc_run_individual_enrollment_bulk_operation(prov_sc, &bulkop, &bulkres);
+
+    /* ---Free memory allocated in bulkres---*/
+    bulkOperationResult_free(bulkres);
+
+    /* ---Now adjust the bulk operation structure for deletion */
+    bulkop.mode = BULK_OP_DELETE;
+
+    /* ---Run the bulk operation to delete the enrollments--- */
+    prov_sc_run_individual_enrollment_bulk_operation(prov_sc, &bulkop, &bulkres);
+
+    /* ---Free memory allocated in bulkres--- */
+    bulkOperationResult_free(bulkres);
+
+    /* ---Destroy the enrollment related handles--- */
+    individualEnrollment_destroy(ie1);
+    individualEnrollment_destroy(ie2);
+
+    /* ---Destroy the provisioning service client handle--- */
+    prov_sc_destroy(prov_sc);
 
     return result;
 }

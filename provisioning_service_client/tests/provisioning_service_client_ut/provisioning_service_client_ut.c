@@ -111,11 +111,14 @@ extern "C"
 static const MAP_HANDLE TEST_MAP_HANDLE = (MAP_HANDLE)0x11111111;
 static const IO_INTERFACE_DESCRIPTION* TEST_INTERFACE_DESC = (IO_INTERFACE_DESCRIPTION*)0x11111112;
 static const HTTP_CLIENT_HANDLE TEST_HTTP_CLIENT_HANDLE = (HTTP_CLIENT_HANDLE)0x11111113;
-static INDIVIDUAL_ENROLLMENT_HANDLE TEST_INDIVIDUAL_ENROLLMENT_HANDLE = (INDIVIDUAL_ENROLLMENT_HANDLE)0x11111114;
+#define TEST_INDIVIDUAL_ENROLLMENT_HANDLE (INDIVIDUAL_ENROLLMENT_HANDLE)0x11111114
 static ATTESTATION_MECHANISM_HANDLE TEST_ATT_MECH_HANDLE = (ATTESTATION_MECHANISM_HANDLE)0x11111115;
 static PROVISIONING_SERVICE_CLIENT_HANDLE TEST_PROVISIONING_SC_HANDLE = (PROVISIONING_SERVICE_CLIENT_HANDLE)0x11111116;
 static ENROLLMENT_GROUP_HANDLE TEST_ENROLLMENT_GROUP_HANDLE = (ENROLLMENT_GROUP_HANDLE)0x11111117;
 static IO_INTERFACE_DESCRIPTION* TEST_IO_INTERFACE_DESC = (IO_INTERFACE_DESCRIPTION*)0x11111118;
+static STRING_HANDLE TEST_STRING_HANDLE = (STRING_HANDLE)0x11111119;
+static DEVICE_REGISTRATION_STATE_HANDLE TEST_DEVICE_REGISTRATION_STATE_HANDLE = (DEVICE_REGISTRATION_STATE_HANDLE)0x11111120;
+#define TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 (INDIVIDUAL_ENROLLMENT_HANDLE)0x11111121
 static const unsigned char* TEST_REPLY_JSON = (const unsigned char*)"{my-json-reply}";
 static const char* TEST_ENROLLMENT_JSON = "{my-json-serialized-enrollment}";
 static const char* TEST_CONNECTION_STRING = "my-connection-string";
@@ -321,6 +324,26 @@ static ENROLLMENT_GROUP_HANDLE my_enrollmentGroup_deserializeFromJson(const char
     return result;
 }
 
+static DEVICE_REGISTRATION_STATE_HANDLE my_deviceRegistrationState_deserializeFromJson(const char* json_string)
+{
+    DEVICE_REGISTRATION_STATE_HANDLE result;
+    if (json_string != NULL)
+        result = (DEVICE_REGISTRATION_STATE_HANDLE)real_malloc(1);
+    else
+        result = NULL;
+    return result;
+}
+
+static PROVISIONING_BULK_OPERATION_RESULT* my_bulkOperationResult_deserializeFromJson(const char* json_string)
+{
+    PROVISIONING_BULK_OPERATION_RESULT* result;
+    if (json_string != NULL)
+        result = (PROVISIONING_BULK_OPERATION_RESULT*)real_malloc(1);
+    else
+        result = NULL;
+    return result;
+}
+
 static void my_individualEnrollment_destroy(INDIVIDUAL_ENROLLMENT_HANDLE handle)
 {
     real_free(handle);
@@ -329,6 +352,16 @@ static void my_individualEnrollment_destroy(INDIVIDUAL_ENROLLMENT_HANDLE handle)
 static void my_enrollmentGroup_destroy(ENROLLMENT_GROUP_HANDLE handle)
 {
     real_free(handle);
+}
+
+static void my_deviceRegistrationState_destroy(DEVICE_REGISTRATION_STATE_HANDLE handle)
+{
+    real_free(handle);
+}
+
+static void my_bulkOperationResult_free(PROVISIONING_BULK_OPERATION_RESULT* bulk_res)
+{
+    real_free(bulk_res);
 }
 
 static INDIVIDUAL_ENROLLMENT_HANDLE my_individualEnrollment_create(const char* reg_id, ATTESTATION_MECHANISM_HANDLE att_handle)
@@ -377,6 +410,22 @@ static const char* my_enrollmentGroup_getEtag(ENROLLMENT_GROUP_HANDLE handle)
     return result;
 }
 
+static const char* my_deviceRegistrationState_getRegistrationId(DEVICE_REGISTRATION_STATE_HANDLE handle)
+{
+    const char* result = NULL;
+    if (handle != NULL)
+        result = TEST_REGID;
+    return result;
+}
+
+static const char* my_deviceRegistrationState_getEtag(DEVICE_REGISTRATION_STATE_HANDLE handle)
+{
+    const char* result = NULL;
+    if (handle != NULL)
+        result = TEST_ETAG;
+    return result;
+}
+
 static char* my_individualEnrollment_serializeToJson(INDIVIDUAL_ENROLLMENT_HANDLE handle)
 {
     (void)handle;
@@ -390,6 +439,16 @@ static char* my_individualEnrollment_serializeToJson(INDIVIDUAL_ENROLLMENT_HANDL
 static char* my_enrollmentGroup_serializeToJson(ENROLLMENT_GROUP_HANDLE handle)
 {
     (void)handle;
+    char* result = NULL;
+    size_t len = strlen(TEST_ENROLLMENT_JSON);
+    result = (char*)real_malloc(len + 1);
+    strncpy(result, TEST_ENROLLMENT_JSON, len + 1);
+    return result;
+}
+
+static char* my_bulkOperation_serializeToJson(const PROVISIONING_BULK_OPERATION* bulkop)
+{
+    (void)bulkop;
     char* result = NULL;
     size_t len = strlen(TEST_ENROLLMENT_JSON);
     result = (char*)real_malloc(len + 1);
@@ -472,11 +531,30 @@ static void register_global_mock_hooks()
     REGISTER_GLOBAL_MOCK_HOOK(enrollmentGroup_getEtag, my_enrollmentGroup_getEtag);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(enrollmentGroup_getEtag, NULL);
 
+    REGISTER_GLOBAL_MOCK_HOOK(deviceRegistrationState_destroy, my_deviceRegistrationState_destroy);
+
+    REGISTER_GLOBAL_MOCK_HOOK(deviceRegistrationState_getRegistrationId, my_deviceRegistrationState_getRegistrationId);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(deviceRegistrationState_getRegistrationId, NULL);
+
+    REGISTER_GLOBAL_MOCK_HOOK(deviceRegistrationState_getEtag, my_deviceRegistrationState_getEtag);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(deviceRegistrationState_getEtag, NULL);
+
     REGISTER_GLOBAL_MOCK_HOOK(individualEnrollment_serializeToJson, my_individualEnrollment_serializeToJson);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(individualEnrollment_serializeToJson, NULL);
 
     REGISTER_GLOBAL_MOCK_HOOK(enrollmentGroup_serializeToJson, my_enrollmentGroup_serializeToJson);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(enrollmentGroup_serializeToJson, NULL);
+
+    REGISTER_GLOBAL_MOCK_HOOK(bulkOperation_serializeToJson, my_bulkOperation_serializeToJson);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(bulkOperation_serializeToJson, NULL);
+
+    REGISTER_GLOBAL_MOCK_HOOK(deviceRegistrationState_deserializeFromJson, my_deviceRegistrationState_deserializeFromJson);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(deviceRegistrationState_deserializeFromJson, NULL);
+
+    REGISTER_GLOBAL_MOCK_HOOK(bulkOperationResult_deserializeFromJson, my_bulkOperationResult_deserializeFromJson);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(bulkOperationResult_deserializeFromJson, NULL);
+
+    REGISTER_GLOBAL_MOCK_HOOK(bulkOperationResult_free, my_bulkOperationResult_free);
 }
 
 static void register_global_mock_returns()
@@ -496,8 +574,17 @@ static void register_global_mock_returns()
     REGISTER_GLOBAL_MOCK_RETURN(uhttp_client_set_trace, HTTP_CLIENT_OK);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(uhttp_client_set_trace, HTTP_CLIENT_INVALID_ARG);
 
+    REGISTER_GLOBAL_MOCK_RETURN(STRING_construct, TEST_STRING_HANDLE);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(STRING_construct, NULL);
+
+    //REGISTER_GLOBAL_MOCK_RETURN(STRING_construct_sprintf, TEST_STRING_HANDLE);
+    //REGISTER_GLOBAL_MOCK_FAIL_RETURN(STRING_construct_sprintf, NULL);
+
+    //REGISTER_GLOBAL_MOCK_RETURN(STRING_sprintf, 0);
+    //REGISTER_GLOBAL_MOCK_FAIL_RETURN(STRING_sprintf, __FAILURE__);
+
     REGISTER_GLOBAL_MOCK_RETURN(STRING_c_str, TEST_STRING);
-    REGISTER_GLOBAL_MOCK_FAIL_RETURN(STRING_c_str, NULL);
+    //REGISTER_GLOBAL_MOCK_FAIL_RETURN(STRING_c_str, NULL);
 
     REGISTER_GLOBAL_MOCK_RETURN(http_proxy_io_get_interface_description, TEST_IO_INTERFACE_DESC);
 }
@@ -509,8 +596,10 @@ static void register_global_mock_alias_types()
     REGISTER_UMOCK_ALIAS_TYPE(ATTESTATION_MECHANISM_HANDLE, void*);
     REGISTER_UMOCK_ALIAS_TYPE(INDIVIDUAL_ENROLLMENT_HANDLE, void*);
     REGISTER_UMOCK_ALIAS_TYPE(ENROLLMENT_GROUP_HANDLE, void*);
+    REGISTER_UMOCK_ALIAS_TYPE(DEVICE_REGISTRATION_STATE_HANDLE, void*);
     REGISTER_UMOCK_ALIAS_TYPE(const INDIVIDUAL_ENROLLMENT_HANDLE, void*);
     REGISTER_UMOCK_ALIAS_TYPE(const ENROLLMENT_GROUP_HANDLE, void*);
+    REGISTER_UMOCK_ALIAS_TYPE(const DEVICE_REGISTRATION_STATE_HANDLE, void*);
     REGISTER_UMOCK_ALIAS_TYPE(HTTP_HEADERS_HANDLE, void*);
     REGISTER_UMOCK_ALIAS_TYPE(ON_HTTP_ERROR_CALLBACK, void*);
     REGISTER_UMOCK_ALIAS_TYPE(ON_HTTP_OPEN_COMPLETE_CALLBACK, void*);
@@ -597,11 +686,21 @@ static void expected_calls_mallocAndStrcpy_overwrite()
     STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
 }
 
-static void expected_calls_construct_registration_path()
+static void expected_calls_construct_registration_path(bool has_id)
 {
-    STRICT_EXPECTED_CALL(URL_EncodeString(IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
-    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+    if (has_id)
+    {
+        STRICT_EXPECTED_CALL(URL_EncodeString(IGNORED_PTR_ARG));
+        STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+        //STRICT_EXPECTED_CALL(STRING_construct_sprintf(IGNORED_PTR_ARG, IGNORED_PTR_ARG)); <---- Call cannot be mocked
+        STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+    }
+    else
+    {
+        STRICT_EXPECTED_CALL(STRING_construct(IGNORED_PTR_ARG));
+    }
+    //STRICT_EXPECTED_CALL(STRING_sprintf(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG)); <---- Call cannot be mocked
+
 }
 
 static void expected_calls_construct_http_headers(etag_flag etag_flag, HTTP_CLIENT_REQUEST_TYPE request)
@@ -1149,7 +1248,7 @@ TEST_FUNCTION(prov_sc_create_or_update_individual_enrollment_GOLDEN)
 
     STRICT_EXPECTED_CALL(individualEnrollment_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
@@ -1187,7 +1286,7 @@ TEST_FUNCTION(prov_sc_create_or_update_individual_enrollment_GOLDEN_w_etag)
 
     STRICT_EXPECTED_CALL(individualEnrollment_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG));
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
@@ -1240,7 +1339,7 @@ TEST_FUNCTION(prov_sc_create_or_update_individual_enrollment_GOLDEN_ALL_HTTP_OPT
 
     STRICT_EXPECTED_CALL(individualEnrollment_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
@@ -1280,7 +1379,7 @@ TEST_FUNCTION(prov_sc_create_or_update_individual_enrollment_FAIL_null_etag)
 
     STRICT_EXPECTED_CALL(individualEnrollment_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL); //cannot fail
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
@@ -1343,7 +1442,7 @@ TEST_FUNCTION(prov_sc_create_or_update_individual_enrollment_FAIL_w_etag)
 
     STRICT_EXPECTED_CALL(individualEnrollment_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG)); //cannot fail
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
@@ -1421,7 +1520,7 @@ TEST_FUNCTION(prov_sc_create_or_update_individual_enrollment_FAIL_ALL_HTTP_OPTIO
 
     STRICT_EXPECTED_CALL(individualEnrollment_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL); //cannot fail
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
@@ -1519,7 +1618,7 @@ TEST_FUNCTION(prov_sc_delete_individual_enrollment_GOLDEN_NO_ETAG)
     //arrange
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL); //no etag
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -1551,7 +1650,7 @@ TEST_FUNCTION(prov_sc_delete_individual_enrollment_GOLDEN_WITH_ETAG)
     //arrange
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -1586,7 +1685,7 @@ TEST_FUNCTION(prov_sc_delete_individual_enrollment_FAIL)
 
     STRICT_EXPECTED_CALL(individualEnrollment_getEtag(IGNORED_PTR_ARG)); //can fail, but for sake of this example, cannot
     STRICT_EXPECTED_CALL(individualEnrollment_getRegistrationId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -1673,7 +1772,7 @@ TEST_FUNCTION(prov_sc_delete_individual_enrollment_by_param_GOLDEN_NO_ETAG)
     umock_c_reset_all_calls();
 
     //arrange
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_DELETE); // <- this NO_ETAG flag is what proves Requirement 047 - if etag wasn't ignored, actual calls will not line up with expected
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -1701,7 +1800,7 @@ TEST_FUNCTION(prov_sc_delete_individual_enrollment_by_param_GOLDEN_WITH_ETAG)
     umock_c_reset_all_calls();
 
     //arrange
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -1732,7 +1831,7 @@ TEST_FUNCTION(prov_sc_delete_individual_enrollment_by_param_FAIL)
 
     umock_c_reset_all_calls();
 
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -1839,7 +1938,7 @@ TEST_FUNCTION(prov_sc_get_individual_enrollment_GOLDEN)
     INDIVIDUAL_ENROLLMENT_HANDLE ie = NULL;
     umock_c_reset_all_calls();
 
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_GET);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_GET, RESPONSE);
@@ -1873,7 +1972,7 @@ TEST_FUNCTION(prov_sc_get_individual_enrollment_FAIL)
     INDIVIDUAL_ENROLLMENT_HANDLE ie = NULL;
     umock_c_reset_all_calls();
 
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_GET);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_GET, RESPONSE);
@@ -1986,7 +2085,7 @@ TEST_FUNCTION(prov_sc_create_or_update_enrollment_group_GOLDEN_no_etag)
 
     STRICT_EXPECTED_CALL(enrollmentGroup_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(enrollmentGroup_getGroupId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(enrollmentGroup_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL); //cannot fail
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
@@ -2024,7 +2123,7 @@ TEST_FUNCTION(prov_sc_create_or_update_enrollment_group_GOLDEN_w_etag)
 
     STRICT_EXPECTED_CALL(enrollmentGroup_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(enrollmentGroup_getGroupId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(enrollmentGroup_getEtag(IGNORED_PTR_ARG)); //cannot fail
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
@@ -2064,7 +2163,7 @@ TEST_FUNCTION(prov_sc_create_or_update_enrollment_group_FAIL_no_etag)
 
     STRICT_EXPECTED_CALL(enrollmentGroup_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(enrollmentGroup_getGroupId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(enrollmentGroup_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL); //cannot fail
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
@@ -2127,7 +2226,7 @@ TEST_FUNCTION(prov_sc_create_or_update_enrollment_group_FAIL_w_etag)
 
     STRICT_EXPECTED_CALL(enrollmentGroup_serializeToJson(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(enrollmentGroup_getGroupId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     STRICT_EXPECTED_CALL(enrollmentGroup_getEtag(IGNORED_PTR_ARG)); //cannot fail
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_PUT);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
@@ -2225,7 +2324,7 @@ TEST_FUNCTION(prov_sc_delete_enrollment_group_GOLDEN_NO_ETAG)
     //arrange
     STRICT_EXPECTED_CALL(enrollmentGroup_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL); //no etag
     STRICT_EXPECTED_CALL(enrollmentGroup_getGroupId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -2257,7 +2356,7 @@ TEST_FUNCTION(prov_sc_delete_enrollment_group_GOLDEN_WITH_ETAG)
     //arrange
     STRICT_EXPECTED_CALL(enrollmentGroup_getEtag(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(enrollmentGroup_getGroupId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -2292,7 +2391,7 @@ TEST_FUNCTION(prov_sc_delete_enrollment_group_FAIL)
 
     STRICT_EXPECTED_CALL(enrollmentGroup_getEtag(IGNORED_PTR_ARG)); //can fail, but for sake of this example, cannot
     STRICT_EXPECTED_CALL(enrollmentGroup_getGroupId(IGNORED_PTR_ARG));
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -2379,7 +2478,7 @@ TEST_FUNCTION(prov_sc_delete_enrollment_group_by_param_GOLDEN_NO_ETAG)
     umock_c_reset_all_calls();
 
     //arrange
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_DELETE); // <- this NO_ETAG flag is what proves Requirement 054 - if etag wasn't ignored, actual calls will not line up with expected
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -2407,7 +2506,7 @@ TEST_FUNCTION(prov_sc_delete_enrollment_group_by_param_GOLDEN_WITH_ETAG)
     umock_c_reset_all_calls();
 
     //arrange
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -2438,7 +2537,7 @@ TEST_FUNCTION(prov_sc_delete_enrollment_group_by_param_FAIL)
 
     umock_c_reset_all_calls();
 
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
@@ -2544,7 +2643,7 @@ TEST_FUNCTION(prov_sc_get_enrollment_group_GOLDEN)
     ENROLLMENT_GROUP_HANDLE eg = NULL;
     umock_c_reset_all_calls();
 
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_GET);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_GET, RESPONSE);
@@ -2578,7 +2677,7 @@ TEST_FUNCTION(prov_sc_get_enrollment_group_FAIL)
     ENROLLMENT_GROUP_HANDLE eg = NULL;
     umock_c_reset_all_calls();
 
-    expected_calls_construct_registration_path();
+    expected_calls_construct_registration_path(true);
     expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_GET);
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
     expected_calls_rest_call(HTTP_CLIENT_REQUEST_GET, RESPONSE);
@@ -2620,6 +2719,642 @@ TEST_FUNCTION(prov_sc_get_enrollment_group_FAIL)
     //cleanup
     prov_sc_destroy(sc);
     enrollmentGroup_destroy(eg);
+    umock_c_negative_tests_deinit();
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_024: [ If prov_client or reg_id are NULL, prov_sc_get_device_registration_state shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_get_device_registration_state_ERROR_INPUT_NULL_PROV_SC)
+{
+    //arrange
+    DEVICE_REGISTRATION_STATE_HANDLE drs;
+
+    //act
+    int res = prov_sc_get_device_registration_state(NULL, TEST_REGID, &drs);
+
+    //assert
+    ASSERT_ARE_NOT_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_024: [ If prov_client or reg_id are NULL, prov_sc_get_device_registration_state shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_get_device_registration_state_ERROR_INPUT_NULL_REG_ID)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    DEVICE_REGISTRATION_STATE_HANDLE drs;
+    umock_c_reset_all_calls();
+
+    //act
+    int res = prov_sc_get_device_registration_state(sc, NULL, &drs);
+
+    //assert
+    ASSERT_ARE_NOT_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_024: [ If prov_client or reg_id are NULL, prov_sc_get_device_registration_state shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_get_device_registration_state_ERROR_INPUT_NULL_ENROLLMENT)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    umock_c_reset_all_calls();
+
+    //act
+    int res = prov_sc_get_enrollment_group(sc, TEST_REGID, NULL);
+
+    //assert
+    ASSERT_ARE_NOT_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_025: [ A 'GET' REST call shall be issued to retrieve the registration state of a device with ID reg_id from the Provisioning Service ] */
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_027: [ The data from the retrieved device registration state shall populate reg_state ] */
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_029: [ Upon successful population of reg_state with the retrieved device registration state data, prov_sc_get_device_registration_state shall return 0 ] */
+TEST_FUNCTION(prov_sc_get_device_registration_state_GOLDEN)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    DEVICE_REGISTRATION_STATE_HANDLE drs = NULL;
+    umock_c_reset_all_calls();
+
+    expected_calls_construct_registration_path(true);
+    expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_GET);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_GET, RESPONSE);
+    STRICT_EXPECTED_CALL(deviceRegistrationState_deserializeFromJson(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+
+    //act
+    int res = prov_sc_get_device_registration_state(sc, TEST_REGID, &drs);
+
+    //assert
+    ASSERT_ARE_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_IS_NOT_NULL(drs);
+
+    //cleanup
+    prov_sc_destroy(sc);
+    deviceRegistrationState_destroy(drs);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_026: [ If the 'GET' REST call fails, prov_sc_get_device_registration_state shall fail and return a non-zero value ] */
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_028: [ If populating reg_state with retrieved data fails, prov_sc_get_device_registration_state shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_get_device_registration_state_FAIL)
+{
+    //arrange
+    int negativeTestsInitResult = umock_c_negative_tests_init();
+    ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    DEVICE_REGISTRATION_STATE_HANDLE drs = NULL;
+    umock_c_reset_all_calls();
+
+    expected_calls_construct_registration_path(true);
+    expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_GET);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_GET, RESPONSE);
+    STRICT_EXPECTED_CALL(deviceRegistrationState_deserializeFromJson(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+
+    umock_c_negative_tests_snapshot();
+
+    size_t calls_cannot_fail[] = { 1, 2, 4, 9, 11, 12, 16, 18, 20, 21, 23, 24, 25 };
+    size_t count = umock_c_negative_tests_call_count();
+    size_t num_cannot_fail = sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0]);
+
+    size_t test_num = 0;
+    size_t test_max = count - num_cannot_fail;
+
+    for (size_t index = 0; index < count; index++)
+    {
+        if (should_skip_index(index, calls_cannot_fail, sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0])) != 0)
+            continue;
+        test_num++;
+
+        char tmp_msg[128];
+        sprintf(tmp_msg, "prov_sc_get_device_registration_state failure in test %zu/%zu", test_num, test_max);
+
+        umock_c_negative_tests_reset();
+        umock_c_negative_tests_fail_call(index);
+
+        //act
+        int res = prov_sc_get_device_registration_state(sc, TEST_REGID, &drs);
+
+        //assert
+        ASSERT_ARE_NOT_EQUAL_WITH_MSG(int, res, 0, tmp_msg);
+
+        g_uhttp_client_dowork_call_count = 0;
+    }
+
+    //cleanup
+    prov_sc_destroy(sc);
+    deviceRegistrationState_destroy(drs);
+    umock_c_negative_tests_deinit();
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_020: [ If prov_client or reg_id are NULL, prov_sc_delete_device_registration_state shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_ERROR_INPUT_NULL_PROV_SC)
+{
+    //arrange
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getEtag(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getRegistrationId(IGNORED_PTR_ARG));
+
+    //act
+    int res = prov_sc_delete_device_registration_state(NULL, TEST_DEVICE_REGISTRATION_STATE_HANDLE);
+
+    //assert
+    ASSERT_ARE_NOT_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_020: [ If prov_client or reg_id are NULL, prov_sc_delete_device_registration_state shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_ERROR_INPUT_NULL_ENROLLMENT)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    umock_c_reset_all_calls();
+
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getEtag(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getRegistrationId(IGNORED_PTR_ARG));
+
+    //act
+    int res = prov_sc_delete_device_registration_state(sc, NULL);
+
+    //assert
+    ASSERT_ARE_NOT_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_021: [ A 'DELETE' REST call shall be issued to delete the registration state of a device with ID reg_id from the Provisioning Service ] */
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_023: [ Upon a successful delete, prov_sc_delete_device_registration_state shall return 0 ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_GOLDEN_NO_ETAG)
+{
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    set_response_status(RESPONSE_OFF);
+    umock_c_reset_all_calls();
+
+    //arrange
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getEtag(IGNORED_PTR_ARG)).SetReturn(NULL); //no etag
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getRegistrationId(IGNORED_PTR_ARG));
+    expected_calls_construct_registration_path(true);
+    expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_DELETE);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+
+    //act
+    int res = prov_sc_delete_device_registration_state(sc, TEST_DEVICE_REGISTRATION_STATE_HANDLE);
+
+    //assert
+    ASSERT_ARE_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_021: [ A 'DELETE' REST call shall be issued to delete the registration state of a device with ID reg_id from the Provisioning Service ] */
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_023: [ Upon a successful delete, prov_sc_delete_device_registration_state shall return 0 ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_GOLDEN_WITH_ETAG)
+{
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    set_response_status(RESPONSE_OFF);
+    umock_c_reset_all_calls();
+
+    //arrange
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getEtag(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getRegistrationId(IGNORED_PTR_ARG));
+    expected_calls_construct_registration_path(true);
+    expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+
+    //act
+    int res = prov_sc_delete_device_registration_state(sc, TEST_DEVICE_REGISTRATION_STATE_HANDLE);
+
+    //assert
+    ASSERT_ARE_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_022: [ If the 'DELETE' REST call fails, prov_sc_delete_device_registration_state shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_FAIL)
+{
+    //arrange
+    int negativeTestsInitResult = umock_c_negative_tests_init();
+    ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    set_response_status(RESPONSE_OFF);
+
+    umock_c_reset_all_calls();
+
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getEtag(IGNORED_PTR_ARG)); //can fail, but for sake of this example, cannot
+    STRICT_EXPECTED_CALL(deviceRegistrationState_getRegistrationId(IGNORED_PTR_ARG));
+    expected_calls_construct_registration_path(true);
+    expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+
+    umock_c_negative_tests_snapshot();
+
+    size_t calls_cannot_fail[] = { 0, 3, 4, 6, 10, 13, 14, 18, 20, 21, 22, 23, 24, 25 };
+    size_t count = umock_c_negative_tests_call_count();
+    size_t num_cannot_fail = sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0]);
+
+    size_t test_num = 0;
+    size_t test_max = count - num_cannot_fail;
+
+    for (size_t index = 0; index < count; index++)
+    {
+        if (should_skip_index(index, calls_cannot_fail, sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0])) != 0)
+            continue;
+        test_num++;
+
+        char tmp_msg[128];
+        sprintf(tmp_msg, "prov_sc_delete_device_registration_state failure in test %zu/%zu", test_num, test_max);
+
+        umock_c_negative_tests_reset();
+        umock_c_negative_tests_fail_call(index);
+
+        //act
+        int res = prov_sc_delete_device_registration_state(sc, TEST_DEVICE_REGISTRATION_STATE_HANDLE);
+
+        //assert
+        ASSERT_ARE_NOT_EQUAL_WITH_MSG(int, res, 0, tmp_msg);
+
+        g_uhttp_client_dowork_call_count = 0;
+    }
+
+    //cleanup
+    prov_sc_destroy(sc);
+    umock_c_negative_tests_deinit();
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_058: [ If prov_client or reg_id are NULL, prov_sc_delete_device_registration_state_by_param shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_by_param_NULL_PROV_SC)
+{
+    //arrange
+
+    //act
+    int res = prov_sc_delete_device_registration_state_by_param(NULL, TEST_REGID, TEST_ETAG);
+
+    //assert
+    ASSERT_ARE_NOT_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_058: [ If prov_client or reg_id are NULL, prov_sc_delete_device_registration_state_by_param shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_by_param_NULL_REG_ID)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    umock_c_reset_all_calls();
+
+    //act
+    int res = prov_sc_delete_device_registration_state_by_param(sc, NULL, TEST_ETAG);
+
+    //assert
+    ASSERT_ARE_NOT_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_059: [ If etag is given as NULL, it shall be ignored ] */
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_060: [ A 'DELETE' REST call shall be issued to delete the device registration state record with ID reg_id, and optionally, etag from the Provisioning Service ] */
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_062: [ Upon a successful delete, prov_sc_delete_device_registration_state_by_param shall return 0 ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_by_param_GOLDEN_NO_ETAG)
+{
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    set_response_status(RESPONSE_OFF);
+    umock_c_reset_all_calls();
+
+    //arrange
+    expected_calls_construct_registration_path(true);
+    expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_DELETE); // <- this NO_ETAG flag is what proves Requirement 054 - if etag wasn't ignored, actual calls will not line up with expected
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+
+    //act
+    int res = prov_sc_delete_device_registration_state_by_param(sc, TEST_REGID, NULL);
+
+    //assert
+    ASSERT_ARE_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_060: [ A 'DELETE' REST call shall be issued to delete the device registration state record with ID reg_id, and optionally, etag from the Provisioning Service ] */
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_062: [ Upon a successful delete, prov_sc_delete_device_registration_state_by_param shall return 0 ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_by_param_GOLDEN_WITH_ETAG)
+{
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    set_response_status(RESPONSE_OFF);
+    umock_c_reset_all_calls();
+
+    //arrange
+    expected_calls_construct_registration_path(true);
+    expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+
+    //act
+    int res = prov_sc_delete_device_registration_state_by_param(sc, TEST_REGID, TEST_ETAG_STAR);
+
+    //assert
+    ASSERT_ARE_EQUAL(int, res, 0);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/* Tests_PROVISIONING_SERVICE_CLIENT_22_061: [ If the 'DELETE' REST call fails, prov_sc_delete_device_registration_state_by_param shall fail and return a non-zero value ] */
+TEST_FUNCTION(prov_sc_delete_device_registration_state_by_param_FAIL)
+{
+    //arrange
+    int negativeTestsInitResult = umock_c_negative_tests_init();
+    ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    set_response_status(RESPONSE_OFF);
+
+    umock_c_reset_all_calls();
+
+    expected_calls_construct_registration_path(true);
+    expected_calls_construct_http_headers(ETAG, HTTP_CLIENT_REQUEST_DELETE);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_DELETE, NO_RESPONSE);
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //does not fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //does not fail
+
+    umock_c_negative_tests_snapshot();
+
+    size_t calls_cannot_fail[] = { 1, 2, 4, 8, 11, 12, 16, 18, 19, 20, 21, 22, 23 };
+    size_t count = umock_c_negative_tests_call_count();
+    size_t num_cannot_fail = sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0]);
+
+    size_t test_num = 0;
+    size_t test_max = count - num_cannot_fail;
+
+    for (size_t index = 0; index < count; index++)
+    {
+        if (should_skip_index(index, calls_cannot_fail, sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0])) != 0)
+            continue;
+        test_num++;
+
+        char tmp_msg[128];
+        sprintf(tmp_msg, "prov_sc_delete_device_registration_state_by_param failure in test %zu/%zu", test_num, test_max);
+
+        umock_c_negative_tests_reset();
+        umock_c_negative_tests_fail_call(index);
+
+        //act
+        int res = prov_sc_delete_device_registration_state_by_param(sc, TEST_REGID, TEST_ETAG_STAR);
+
+        //assert
+        ASSERT_ARE_NOT_EQUAL_WITH_MSG(int, res, 0, tmp_msg);
+
+        g_uhttp_client_dowork_call_count = 0;
+    }
+
+    //cleanup
+    prov_sc_destroy(sc);
+    umock_c_negative_tests_deinit();
+}
+
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_063: [ If prov_client, bulk_op or bulk_res_ptr are NULL, prov_sc_run_individual_enrollment_bulk_operation shall fail and return a non-zero value ]*/
+TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_NULL_prov)
+{
+    //arrange
+    INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = {TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2};
+    PROVISIONING_BULK_OPERATION bulkop;
+    bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
+    bulkop.enrollments = ie_arr;
+    bulkop.mode = BULK_OP_CREATE;
+    bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res;
+
+    //act
+    int res = prov_sc_run_individual_enrollment_bulk_operation(NULL, &bulkop, &bulk_res);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_NOT_EQUAL(int, 0, res);
+
+    //cleanup
+}
+
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_063: [ If prov_client, bulk_op or bulk_res_ptr are NULL, prov_sc_run_individual_enrollment_bulk_operation shall fail and return a non-zero value ]*/
+TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_NULL_bulkop)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res;
+    umock_c_reset_all_calls();
+
+    //act
+    int res = prov_sc_run_individual_enrollment_bulk_operation(sc, NULL, &bulk_res);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_NOT_EQUAL(int, 0, res);
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_063: [ If prov_client, bulk_op or bulk_res_ptr are NULL, prov_sc_run_individual_enrollment_bulk_operation shall fail and return a non-zero value ]*/
+TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_NULL_bulk_res)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = { TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 };
+    PROVISIONING_BULK_OPERATION bulkop;
+    bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
+    bulkop.enrollments = ie_arr;
+    bulkop.mode = BULK_OP_CREATE;
+    bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
+    umock_c_reset_all_calls();
+
+    //act
+    int res = prov_sc_run_individual_enrollment_bulk_operation(sc, &bulkop, NULL);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_NOT_EQUAL(int, 0, res);
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_064: [ If bulk_op has invalid values, prov_sc_run_individual_enrollment_bulk_operation shall fail and return a non-zero value ]*/
+TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_invalid_bulkop_version)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = { TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 };
+    PROVISIONING_BULK_OPERATION bulkop;
+    bulkop.version = 47474747;
+    bulkop.enrollments = ie_arr;
+    bulkop.mode = BULK_OP_CREATE;
+    bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res;
+    umock_c_reset_all_calls();
+
+    //act
+    int res = prov_sc_run_individual_enrollment_bulk_operation(sc, &bulkop, &bulk_res);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_NOT_EQUAL(int, 0, res);
+
+    //cleanup
+    prov_sc_destroy(sc);
+}
+
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_065: [ A 'POST' REST call shall be issued to run the bulk operation on the Provisoning Service ]*/
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_067: [ The data from the bulk operation response shall populate bulk_res_ptr ]*/
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_069: [ Upon successful population of bulk_res_ptr, prov_sc_run_individual_enrollment_bulk_operation shall return 0 ]*/
+TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_SUCCESS)
+{
+    //arrange
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = { TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 };
+    PROVISIONING_BULK_OPERATION bulkop;
+    bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
+    bulkop.enrollments = ie_arr;
+    bulkop.mode = BULK_OP_CREATE;
+    bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res = NULL;
+    umock_c_reset_all_calls();
+
+    STRICT_EXPECTED_CALL(bulkOperation_serializeToJson(IGNORED_PTR_ARG));
+    expected_calls_construct_registration_path(false);
+    expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_POST);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_POST, RESPONSE);
+    STRICT_EXPECTED_CALL(bulkOperationResult_deserializeFromJson(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //cannot fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //cannot fail
+
+    //act
+    int res = prov_sc_run_individual_enrollment_bulk_operation(sc, &bulkop, &bulk_res);
+
+    //assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_EQUAL(int, 0, res);
+    ASSERT_IS_NOT_NULL(bulk_res);
+
+    //cleanup
+    prov_sc_destroy(sc);
+    bulkOperationResult_free(bulk_res);
+}
+
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_066: [ If the 'POST' REST call fails, prov_sc_run_individual_enrollment_bulk_operation shall fail and return a non-zero value ]*/
+/*Tests_PROVISIONING_SERVICE_CLIENT_22_068: [ If populating bulk_res_ptr with the retrieved data fails, prov_sc_run_individual_enrollment_bulk_operation shall fail and return a non-zero value ]*/
+TEST_FUNCTION(prov_sc_run_individual_enrollment_bulk_operation_ERROR)
+{
+    //arrange
+    int negativeTestsInitResult = umock_c_negative_tests_init();
+    ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+
+    PROVISIONING_SERVICE_CLIENT_HANDLE sc = prov_sc_create_from_connection_string(TEST_CONNECTION_STRING);
+    INDIVIDUAL_ENROLLMENT_HANDLE ie_arr[2] = { TEST_INDIVIDUAL_ENROLLMENT_HANDLE, TEST_INDIVIDUAL_ENROLLMENT_HANDLE2 };
+    PROVISIONING_BULK_OPERATION bulkop;
+    bulkop.version = PROVISIONING_BULK_OPERATION_VERSION_1;
+    bulkop.enrollments = ie_arr;
+    bulkop.mode = BULK_OP_CREATE;
+    bulkop.type = BULK_OP_INDIVIDUAL_ENROLLMENT;
+    PROVISIONING_BULK_OPERATION_RESULT* bulk_res = NULL;
+    umock_c_reset_all_calls();
+
+    STRICT_EXPECTED_CALL(bulkOperation_serializeToJson(IGNORED_PTR_ARG));
+    expected_calls_construct_registration_path(false);
+    expected_calls_construct_http_headers(NO_ETAG, HTTP_CLIENT_REQUEST_POST);
+    STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)); //does not fail
+    expected_calls_rest_call(HTTP_CLIENT_REQUEST_POST, RESPONSE); //----------------->20?
+    STRICT_EXPECTED_CALL(bulkOperationResult_deserializeFromJson(IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //cannot fail
+    STRICT_EXPECTED_CALL(HTTPHeaders_Free(IGNORED_PTR_ARG)); //cannot fail
+    STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG)); //cannot fail
+    STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG)); //cannot fail
+
+    umock_c_negative_tests_snapshot();
+
+    size_t calls_cannot_fail[] = { 3, 8, 10, 11, 15, 17, 19, 20, 22, 23, 24, 25 };
+    size_t count = umock_c_negative_tests_call_count();
+    size_t num_cannot_fail = sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0]);
+
+    size_t test_num = 0;
+    size_t test_max = count - num_cannot_fail;
+
+    for (size_t index = 0; index < count; index++)
+    {
+        if (should_skip_index(index, calls_cannot_fail, sizeof(calls_cannot_fail) / sizeof(calls_cannot_fail[0])) != 0)
+            continue;
+        test_num++;
+
+        char tmp_msg[128];
+        sprintf(tmp_msg, "prov_sc_run_individual_enrollment_bulk_op_ERROR failure in test %zu/%zu", test_num, test_max);
+
+        umock_c_negative_tests_reset();
+        umock_c_negative_tests_fail_call(index);
+
+        //act
+        int res = prov_sc_run_individual_enrollment_bulk_operation(sc, &bulkop, &bulk_res);
+
+        //assert
+        ASSERT_ARE_NOT_EQUAL_WITH_MSG(int, res, 0, tmp_msg);
+
+        g_uhttp_client_dowork_call_count = 0;
+    }
+
+    //cleanup
+    prov_sc_destroy(sc);
     umock_c_negative_tests_deinit();
 }
 

@@ -119,7 +119,7 @@ static int my_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_le
     else
     {
         *dest_len = TEST_ARRAY_SIZE;
-        *dest_arr = real_malloc(*dest_len * sizeof(PROVISIONING_BULK_OPERATION_ERROR*));
+        *dest_arr = (void**)real_malloc(*dest_len * sizeof(PROVISIONING_BULK_OPERATION_ERROR*));
         for (size_t i = 0; i < *dest_len; i++)
         {
             (*dest_arr)[i] = real_malloc(sizeof(PROVISIONING_BULK_OPERATION));
@@ -132,7 +132,7 @@ static int my_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_le
 static void** create_dummy_enrollment_list(size_t len)
 {
     void** ret;
-    ret = real_malloc(len * sizeof(void*));
+    ret = (void**)real_malloc(len * sizeof(void*));
     return ret;
 }
 

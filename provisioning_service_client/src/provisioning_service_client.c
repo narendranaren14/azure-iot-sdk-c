@@ -244,18 +244,6 @@ static HTTP_HEADERS_HANDLE construct_http_headers(const PROV_SERVICE_CLIENT* pro
     return result;
 }
 
-//static int add_query_headers(HTTP_HEADERS_HANDLE headers, PROVISIONING_QUERY* query)
-//{
-//    int result = 0;
-//    if ((HTTPHeaders_AddHeaderNameValuePair(headers, HEADER_KEY_CONTINUATION, query->continuation_token) != HTTP_HEADERS_OK) ||
-//        (HTTPHeaders_AddHeaderNameValuePair(headers, HEADER_KEY_MAX_ITEM_COUNT, query->page_size) != HTTP_HEADERS_OK))
-//    {
-//        LogError("Failure adding query headers");
-//        result = __FAILURE__;
-//    }
-//    return result;
-//}
-
 static STRING_HANDLE create_registration_path(const char* path_format, const char* id)
 {
     STRING_HANDLE registration_path;
@@ -434,10 +422,17 @@ static int prov_sc_create_or_update_record(PROVISIONING_SERVICE_CLIENT_HANDLE pr
         }
         else
         {
-            STRING_HANDLE registration_path = create_registration_path(path_format, vector.getId(handle));
-            if (registration_path == NULL)
+            STRING_HANDLE registration_path = NULL;
+            const char* id = NULL;
+            if ((id = vector.getId(handle)) == NULL)
+            {
+                LogError("Given model does not have a valid ID");
+                result = __FAILURE__;
+            }
+            else if ((registration_path = create_registration_path(path_format, id)) == NULL)
             {
                 LogError("Failed to construct a registration path");
+                result = __FAILURE__;
             }
             else
             {
@@ -502,6 +497,7 @@ static int prov_sc_delete_record_by_param(PROVISIONING_SERVICE_CLIENT_HANDLE pro
         if (registration_path == NULL)
         {
             LogError("Failed to construct a registration path");
+            result = __FAILURE__;
         }
         else
         {
@@ -550,6 +546,7 @@ static int prov_sc_get_record(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, co
         if (registration_path == NULL)
         {
             LogError("Failed to construct a registration path");
+            result = __FAILURE__;
         }
         else
         {
@@ -599,6 +596,11 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
         LogError("Invalid Bulk Op");
         result = __FAILURE__;
     }
+    else if (bulk_op->version != PROVISIONING_BULK_OPERATION_VERSION_1)
+    {
+        LogError("Invalid Bulk Op Version #");
+        result = __FAILURE__;
+    }
     else if (bulk_res_ptr == NULL)
     {
         LogError("Invalid Bulk Op Result pointer");
@@ -618,6 +620,7 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
             if (registration_path == NULL)
             {
                 LogError("Failed to construct a registration path");
+                result = __FAILURE__;
             }
             else
             {
@@ -931,7 +934,12 @@ int prov_sc_run_individual_enrollment_bulk_operation(PROVISIONING_SERVICE_CLIENT
 //    //return prov_sc_query(prov_client, query, INDV_ENROLL_QUERY_PATH_FMT);
 //}
 
-int prov_sc_delete_device_registration_state(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, const char* reg_id, const char* etag)
+int prov_sc_delete_device_registration_state(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, DEVICE_REGISTRATION_STATE_HANDLE reg_state)
+{
+    return prov_sc_delete_record_by_param(prov_client, deviceRegistrationState_getRegistrationId(reg_state), deviceRegistrationState_getEtag(reg_state), REG_STATE_PROVISION_PATH_FMT);
+}
+
+int prov_sc_delete_device_registration_state_by_param(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, const char* reg_id, const char* etag)
 {
     return prov_sc_delete_record_by_param(prov_client, reg_id, etag, REG_STATE_PROVISION_PATH_FMT);
 }

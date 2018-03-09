@@ -11,15 +11,8 @@ extern "C" {
     typedef struct PROVISIONING_QUERY_SPECIFICATION_TAG
     {
         char* query_string;
-    } PROVISIONING_QUERY_SPECIFICATION;
-
-    typedef struct PROVISIONING_QUERY_TAG
-    {
         size_t page_size;
-        char* continuation_token;
-        PROVISIONING_QUERY_SPECIFICATION* query_spec;
-
-    } PROVISIONING_QUERY;
+    } PROVISIONING_QUERY_SPECIFICATION;
 
     typedef struct PROVISIONING_QUERY_RESPONSE_TAG
     {
