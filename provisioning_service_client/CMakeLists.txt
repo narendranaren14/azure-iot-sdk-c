@@ -12,7 +12,6 @@ compileAsC99()
 
 set(provisioning_service_client_c_files
 ./src/provisioning_service_client.c
-./src/provisioning_sc_query.c
 ./src/provisioning_sc_bulk_operation.c
 ./src/provisioning_sc_attestation_mechanism.c
 ./src/provisioning_sc_device_registration_state.c
