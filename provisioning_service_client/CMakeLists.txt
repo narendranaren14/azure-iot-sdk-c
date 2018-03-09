@@ -26,7 +26,6 @@ set(provisioning_service_client_c_files
 
 set(provisioning_service_client_h_files
 ./inc/provisioning_service_client.h
-./inc/provisioning_sc_query.h
 ./inc/provisioning_sc_bulk_operation.h
 ./inc/provisioning_sc_models.h
 ./inc/provisioning_sc_attestation_mechanism.h
