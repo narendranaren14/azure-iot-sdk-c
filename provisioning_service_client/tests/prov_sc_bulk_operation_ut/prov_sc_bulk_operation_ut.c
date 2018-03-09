@@ -335,7 +335,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_success_ie)
     STRICT_EXPECTED_CALL(json_value_init_object());
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_object_set_string(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(json_serialize_and_set_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulk_op.enrollments, bulk_op.num_enrollments, individualEnrollment_toJson));
+    STRICT_EXPECTED_CALL(json_serialize_and_set_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulk_op.enrollments, bulk_op.num_enrollments, (TO_JSON_FUNCTION)individualEnrollment_toJson));
     STRICT_EXPECTED_CALL(json_serialize_to_string(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(mallocAndStrcpy_s(IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
@@ -372,7 +372,7 @@ TEST_FUNCTION(bulkOperation_serializeToJson_error_ie)
     STRICT_EXPECTED_CALL(json_value_init_object());
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_object_set_string(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(json_serialize_and_set_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulk_op.enrollments, bulk_op.num_enrollments, individualEnrollment_toJson));
+    STRICT_EXPECTED_CALL(json_serialize_and_set_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulk_op.enrollments, bulk_op.num_enrollments, (TO_JSON_FUNCTION)individualEnrollment_toJson));
     STRICT_EXPECTED_CALL(json_serialize_to_string(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(mallocAndStrcpy_s(IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
@@ -508,7 +508,7 @@ TEST_FUNCTION(bulkOperationResult_deserializeFromJson_success_has_errors)
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(json_object_get_boolean(IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(0);
-    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulkOperationError_fromJson));
+    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, (FROM_JSON_FUNCTION)bulkOperationError_fromJson));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
 
     //act
@@ -536,7 +536,7 @@ TEST_FUNCTION(bulkOperationResult_deserializeFromJson_error_has_errors)
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(json_object_get_boolean(IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(0);
-    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulkOperationError_fromJson));
+    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, (FROM_JSON_FUNCTION)bulkOperationError_fromJson));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
     umock_c_negative_tests_snapshot();
 
@@ -576,7 +576,7 @@ TEST_FUNCTION(bulkOperationResult_deserializeFromJson_success_no_errors)
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(json_object_get_boolean(IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(1);
-    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulkOperationError_fromJson));
+    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, (FROM_JSON_FUNCTION)bulkOperationError_fromJson));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
 
     //act
@@ -604,7 +604,7 @@ TEST_FUNCTION(bulkOperationResult_deserializeFromJson_error_no_errors)
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(json_object_get_boolean(IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(1);
-    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, bulkOperationError_fromJson));
+    STRICT_EXPECTED_CALL(json_deserialize_and_get_struct_array(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, (FROM_JSON_FUNCTION)bulkOperationError_fromJson));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
     umock_c_negative_tests_snapshot();
 

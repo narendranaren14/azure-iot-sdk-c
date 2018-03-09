@@ -660,78 +660,6 @@ static int prov_sc_run_bulk_operation(PROVISIONING_SERVICE_CLIENT_HANDLE prov_cl
     return result;
 }
 
-//static int prov_sc_query(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_QUERY* query, const char* path_format, void** response, size_t* response_len)
-//{
-//    int result = 0;
-//
-//    if (prov_client == NULL)
-//    {
-//        LogError("Invalid Provisioning Client Handle");
-//        result = __FAILURE__;
-//    }
-//    else if (query == NULL || query->query_spec == NULL)
-//    {
-//        LogError("Invalid Query");
-//        result = __FAILURE__;
-//    }
-//    else
-//    {
-//        char* content;
-//        if ((content = querySpecification_serializeToJson(query->query_spec)) == NULL)
-//        {
-//            LogError("Failure serializing bulk operation");
-//            result = __FAILURE__;
-//        }
-//        else
-//        {
-//            STRING_HANDLE registration_path = create_registration_path(path_format, NULL);
-//            if (registration_path == NULL)
-//            {
-//                LogError("Failed to construct a registration path");
-//            }
-//            else
-//            {
-//                HTTP_HEADERS_HANDLE request_headers;
-//                if ((request_headers = construct_http_headers(prov_client, NULL, HTTP_CLIENT_REQUEST_POST)) == NULL)
-//                {
-//                    LogError("Failure constructing http headers");
-//                    result = __FAILURE__;
-//                }
-//                else if (add_query_headers(request_headers, query) != 0)
-//                {
-//                    LogError("Failed constructing http headers");
-//                    result = __FAILURE__;
-//                }
-//                else
-//                {
-//                    result = rest_call(prov_client, HTTP_CLIENT_REQUEST_POST, STRING_c_str(registration_path), request_headers, content);
-//
-//                    if (result == 0)
-//                    {
-//                        if ()
-//                        {
-//                            LogError("Failure deserializing bulk operation result");
-//                            result = __FAILURE__;
-//                        }
-//                    }
-//                    else
-//                    {
-//                        LogError("Rest call failed");
-//                    }
-//
-//                    free(prov_client->response);
-//                    prov_client->response = NULL;
-//                }
-//                HTTPHeaders_Free(request_headers);
-//            }
-//            STRING_delete(registration_path);
-//        }
-//        free(content);
-//    }
-//
-//    return result;
-//}
-
 //Exposed functions below
 
 void prov_sc_destroy(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client)
@@ -928,11 +856,6 @@ int prov_sc_run_individual_enrollment_bulk_operation(PROVISIONING_SERVICE_CLIENT
 {
     return prov_sc_run_bulk_operation(prov_client, bulk_op, bulk_res_ptr, INDV_ENROLL_BULK_PATH_FMT);
 }
-
-//int prov_sc_individual_enrollment_query_get_results(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, PROVISIONING_QUERY* query)
-//{
-//    //return prov_sc_query(prov_client, query, INDV_ENROLL_QUERY_PATH_FMT);
-//}
 
 int prov_sc_delete_device_registration_state(PROVISIONING_SERVICE_CLIENT_HANDLE prov_client, DEVICE_REGISTRATION_STATE_HANDLE reg_state)
 {
